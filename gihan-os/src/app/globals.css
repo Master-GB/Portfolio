@@ -1,20 +1,115 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-
-  --window: #1e293b;
-  --border: #334155;
-
-  --primary: #3b82f6;
-  --secondary: #475569;
-
-  --taskbar: rgba(15, 23, 42, 0.8);
+  --bg: #050810;
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #6366f1;
+  --accent-glow: #818cf8;
+  --cyan: #22d3ee;
+  --pink: #f472b6;
+  --panel-bg: #0f172a;
+  --panel-border: #334155;
+  --window-bg: #1e293b;
+  --taskbar-h: 52px;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "Cascadia Code", "Fira Code", ui-monospace, monospace;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  height: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.4);
+  color: white;
+}
+
+.os-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.os-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.os-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+
+.os-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.os-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #a5b4fc, #22d3ee, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.grid-bg { display: none; }
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive OS windows for mobile/tablet screens */
+@media (max-width: 768px) {
+  .os-window {
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - var(--taskbar-h, 52px)) !important;
+    border-radius: 0 !important;
+  }
 }
