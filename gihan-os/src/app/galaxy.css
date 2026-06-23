@@ -1,0 +1,59 @@
+.galaxy-bg::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 20% 30%, #fff 0.5px, transparent 0.5px),
+              radial-gradient(circle at 80% 70%, #fff 0.5px, transparent 0.5px),
+              radial-gradient(circle at 50% 50%, #fff 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+  animation: moveStars 30s linear infinite;
+}
+
+.galaxy-bg::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.8) 0%,
+    rgba(255,255,255,0.8) 2px,
+    transparent 2px,
+    transparent 100%
+  );
+  background-size: 2px 100%;
+  opacity: 0.6;
+  animation: meteor 5s linear infinite;
+}
+.galaxy-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: #000; /* solid black backdrop */
+  animation: rock 30s ease-in-out infinite;
+}
+
+/* Meteor shower */
+
+
+@keyframes rock {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.8deg); }
+}
+
+@keyframes moveStars {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-50%, -50%); }
+}
+
+@keyframes meteor {
+  from { transform: translate(0, 0); }
+  to { transform: translate(150%, 150%); }
+}
+.grid-bg { display: none; }
