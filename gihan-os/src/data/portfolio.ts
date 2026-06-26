@@ -119,6 +119,97 @@ export const skills = [
   },
 ];
 
+// New structured skills object for enhanced UI (keeps the original `skills` for backward compatibility)
+export const skillsStructured = [
+  {
+    category: "Technical Skills",
+    subcategories: [
+      {
+        category: "Programming Languages",
+        items: [
+          { name: "JavaScript", level: 92, logo: "javascript.png" },
+          { name: "TypeScript", level: 90, logo: "typescript.png" },
+          { name: "Python", level: 85, logo: "python.png" },
+          { name: "Java", level: 80, logo: "java.png" },
+          { name: "C#", level: 75, logo: "csharp.png" },
+        ],
+      },
+      {
+        category: "Frontend Frameworks & Libraries",
+        items: [
+          { name: "React", level: 94, logo: "react.png" },
+          { name: "Next.js", level: 92, logo: "nextjs.png" },
+          { name: "Tailwind CSS", level: 90, logo: "tailwind.png" },
+          { name: "Redux", level: 80, logo: "redux.png" },
+        ],
+      },
+      {
+        category: "Backend Frameworks & APIs",
+        items: [
+          { name: "Node.js", level: 88, logo: "nodejs.png" },
+          { name: "Express", level: 86, logo: "express.png" },
+          { name: "Django", level: 72, logo: "django.png" },
+          { name: "Spring", level: 70, logo: "spring.png" },
+          { name: "REST / GraphQL APIs", level: 88, logo: "api.png" },
+        ],
+      },
+      {
+        category: "Mobile Development",
+        items: [
+          { name: "React Native", level: 78, logo: "react-native.png" },
+          { name: "Flutter", level: 68, logo: "flutter.png" },
+        ],
+      },
+      {
+        category: "Database",
+        items: [
+          { name: "PostgreSQL", level: 82, logo: "postgresql.png" },
+          { name: "MySQL", level: 80, logo: "mysql.png" },
+          { name: "MongoDB", level: 82, logo: "mongodb.png" },
+        ],
+      },
+      {
+        category: "Tools & Platforms",
+        items: [
+          { name: "Git / GitHub", level: 92, logo: "github.png" },
+          { name: "Docker", level: 74, logo: "docker.png" },
+          { name: "AWS", level: 70, logo: "aws.png" },
+          { name: "Figma", level: 75, logo: "figma.png" },
+        ],
+      },
+      {
+        category: "Testing",
+        items: [
+          { name: "Jest", level: 72, logo: "jest.png" },
+          { name: "Cypress", level: 68, logo: "cypress.png" },
+        ],
+      },
+    ],
+  },
+  {
+    category: "Soft Skills",
+    subcategories: [
+      {
+        category: "Interpersonal",
+        items: [
+          { name: "Communication", level: 92 },
+          { name: "Teamwork", level: 90 },
+          { name: "Leadership", level: 80 },
+        ],
+      },
+      {
+        category: "Professional",
+        items: [
+          { name: "Problem Solving", level: 94 },
+          { name: "Adaptability", level: 88 },
+          { name: "Time Management", level: 86 },
+        ],
+      },
+    ],
+  },
+];
+
+
 export const experience = [
   {
     role: "Software Engineering Intern",
@@ -183,7 +274,7 @@ export const terminalCommands: Record<string, string | string[]> = {
 export const apps = [
   { id: "welcome", title: "Welcome", icon: Monitor, defaultSize: { w: 920, h: 640 } },
   { id: "about", title: "About Me", icon: User, defaultSize: { w: 980, h: 660 } },
-  { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 840, h: 640 } },
+  { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1200, h: 650 } },
   { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 640, h: 580 } },
   { id: "resume", title: "Resume", icon: FileText, defaultSize: { w: 760, h: 700 } },
   { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 640, h: 520 } },
