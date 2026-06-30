@@ -274,10 +274,10 @@ export const terminalCommands: Record<string, string | string[]> = {
 export const apps = [
   { id: "welcome", title: "Welcome", icon: Monitor, defaultSize: { w: 920, h: 640 } },
   { id: "about", title: "About Me", icon: User, defaultSize: { w: 980, h: 660 } },
-  { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1200, h: 650 } },
-  { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 640, h: 580 } },
+  { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1000, h: 650 } },
+  { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 840, h: 600 } },
   { id: "resume", title: "Resume", icon: FileText, defaultSize: { w: 760, h: 700 } },
-  { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 640, h: 520 } },
+  { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 920, h: 620 } },
   { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 600, h: 540 } },
   { id: "terminal", title: "Terminal", icon: Terminal, defaultSize: { w: 800, h: 500 } },
   { id: "settings", title: "Settings", icon: Settings, defaultSize: { w: 500, h: 440 } },
