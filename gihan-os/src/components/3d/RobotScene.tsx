@@ -115,9 +115,9 @@ function RobotModel({
 
   // Calculate dynamic scaling and positions based on model characteristics
   const scale =
-    avatar === "robot" ? 0.32 : avatar === "astronaut" ? 0.72 : avatar === "humanoid" ? 0.92 : 0.52;
+    avatar === "robot" ? 0.20 : avatar === "astronaut" ? 0.52 : avatar === "humanoid" ? 0.62 : 0.52;
   const positionY =
-    avatar === "robot" ? -0.8 : avatar === "astronaut" ? -0.85 : avatar === "humanoid" ? -0.92 : -0.72;
+    avatar === "robot" ? -0.9 : avatar === "astronaut" ? -0.85 : avatar === "humanoid" ? -0.92 : -0.72;
 
   return (
     <primitive
@@ -144,10 +144,10 @@ function HologramRing({ themeColor }: { themeColor: string }) {
   });
 
   return (
-    <group position={[0, -0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <group position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       {/* Outer rotating dashed ring */}
       <mesh ref={ringRef1}>
-        <ringGeometry args={[0.7, 0.82, 32]} />
+        <ringGeometry args={[0.5, 0.68, 32]} />
         <meshBasicMaterial
           color={themeColor}
           side={THREE.DoubleSide}
@@ -158,7 +158,7 @@ function HologramRing({ themeColor }: { themeColor: string }) {
       </mesh>
       {/* Inner counter-rotating grid ring */}
       <mesh ref={ringRef2}>
-        <ringGeometry args={[0.55, 0.65, 8]} />
+        <ringGeometry args={[0.5, 0.65, 8]} />
         <meshBasicMaterial
           color={themeColor}
           side={THREE.DoubleSide}
@@ -169,7 +169,7 @@ function HologramRing({ themeColor }: { themeColor: string }) {
       </mesh>
       {/* Core glowing grid disk */}
       <mesh>
-        <circleGeometry args={[0.5, 6]} />
+        <circleGeometry args={[0.35, 6]} />
         <meshBasicMaterial
           color={themeColor}
           side={THREE.DoubleSide}
@@ -224,6 +224,9 @@ export default function RobotScene({
       onCreated={({ gl }) => {
         gl.setClearColor(0x000000, 0);
         gl.shadowMap.type = THREE.PCFShadowMap;
+        // Block wheel events on the canvas DOM element to prevent
+        // scroll-based camera shifts or event bubbling
+        gl.domElement.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
       }}
       style={{ background: "transparent", touchAction: "none" }}
     >

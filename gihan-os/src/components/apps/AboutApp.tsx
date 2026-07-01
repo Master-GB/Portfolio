@@ -562,9 +562,9 @@ export default function AboutApp() {
 
   const stats = [
     { label: "Projects Built", value: 20, suffix: "+" },
-    { label: "Technologies Learned", value: 15, suffix: "+" },
+    { label: "Technologies Learned", value: 30, suffix: "+" },
     { label: "GitHub Repositories", value: 10, suffix: "+" },
-    { label: "Years Coding", value: 4, suffix: "" },
+    { label: "Years Coding", value: 6, suffix: "+" },
   ];
 
   return (
