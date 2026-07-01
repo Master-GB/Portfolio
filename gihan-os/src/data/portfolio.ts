@@ -272,18 +272,15 @@ export const terminalCommands: Record<string, string | string[]> = {
 };
 
 export const apps = [
-  { id: "welcome", title: "Welcome", icon: Monitor, defaultSize: { w: 920, h: 640 } },
-  { id: "about", title: "About Me", icon: User, defaultSize: { w: 980, h: 660 } },
+  { id: "about", title: "About Me", icon: Monitor, defaultSize: { w: 980, h: 660 } },
   { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1000, h: 650 } },
   { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 840, h: 600 } },
   { id: "resume", title: "Resume", icon: FileText, defaultSize: { w: 760, h: 700 } },
   { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 920, h: 620 } },
-  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 600, h: 540 } },
+  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 840, h: 700 } },
   { id: "terminal", title: "Terminal", icon: Terminal, defaultSize: { w: 800, h: 500 } },
   { id: "settings", title: "Settings", icon: Settings, defaultSize: { w: 500, h: 440 } },
   { id: "explorer", title: "Explorer", icon: Folder, defaultSize: { w: 800, h: 600 } },
-  { id: "music", title: "Music", icon: Music, defaultSize: { w: 480, h: 700 } },
-  { id: "browser", title: "Browser", icon: Globe, defaultSize: { w: 1000, h: 720 } },
   { id: "notepad", title: "Notepad", icon: Edit3, defaultSize: { w: 640, h: 500 } },
   { id: "robot_assistant", title: "AI Byte", icon: Bot, defaultSize: { w: 840, h: 620 } },
 ] as const;
