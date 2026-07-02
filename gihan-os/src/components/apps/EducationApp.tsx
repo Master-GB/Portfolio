@@ -426,8 +426,188 @@ function ScrollReveal({ children, className = "", delay = 0 }: { children: React
 
 // ─── AURORA CANVAS ────────────────────────────────────────────────────────────
 
+// Draws a craggy, highly realistic 3D stone/rock
+function drawRock(
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number,
+  radius: number, sides: number,
+  angle: number, color: string, alpha: number
+) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  // Generate highly craggy, irregular rock vertices using multi-layered noise (fractal)
+  const vertices: { x: number; y: number }[] = [];
+  for (let k = 0; k < sides; k++) {
+    const a = (Math.PI * 2 / sides) * k;
+    // Base shape + primary cragginess + micro-roughness
+    const primaryCrag = hash(k * 13.3 + radius, sides) * 0.22;
+    const microRough = hash(k * 37.7 - radius, sides + 5) * 0.08;
+    const r = radius * (0.72 + primaryCrag + microRough);
+    vertices.push({ x: Math.cos(a) * r, y: Math.sin(a) * r });
+  }
+
+  // 1. Drop shadow for depth (rock floating in space)
+  ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+  ctx.shadowBlur = radius * 0.55;
+  ctx.shadowOffsetX = radius * 0.2;
+  ctx.shadowOffsetY = radius * 0.25;
+
+  // 2. Base path & Base rock gradient (stone grey/slate tones)
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+  for (let k = 1; k < sides; k++) {
+    ctx.lineTo(vertices[k].x, vertices[k].y);
+  }
+  ctx.closePath();
+
+  // Create a rock-like directional color gradient
+  const grad = ctx.createLinearGradient(-radius * 0.5, -radius * 0.5, radius * 0.5, radius * 0.5);
+  grad.addColorStop(0, "#4b5563"); // medium grey (lit side)
+  grad.addColorStop(0.5, "#374151"); // dark grey
+  grad.addColorStop(1, "#1f2937"); // deep charcoal (shadow side)
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Reset shadow so inner details don't blur out
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  // 3. Faceted 3D shading (rock faces)
+  const lightDir = { x: -0.8, y: -0.6 }; // light from top-left
+  for (let k = 0; k < sides; k++) {
+    const p1 = vertices[k];
+    const p2 = vertices[(k + 1) % sides];
+
+    // Face normal
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const dot = nx * lightDir.x + ny * lightDir.y;
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.closePath();
+
+    if (dot > 0.15) {
+      // Lit facet (highly reflective slate reflection)
+      ctx.fillStyle = `rgba(209, 213, 219, ${0.12 + dot * 0.25})`; // light grey overlay
+    } else {
+      // Dark/occluded facet
+      ctx.fillStyle = `rgba(17, 24, 39, ${0.35 + Math.abs(dot) * 0.4})`; // dark charcoal overlay
+    }
+    ctx.fill();
+  }
+
+  // 4. Fine rock grain & speckle texture (adds real gritty feeling)
+  const specklesCount = Math.floor(radius * radius * 0.35);
+  for (let s = 0; s < specklesCount; s++) {
+    const seed = s * 7.9 + radius;
+    // Random position inside the bounding circle
+    const sa = hash(seed, 23) * Math.PI * 2;
+    const sd = hash(seed + 1.2, 29) * radius * 0.85;
+    const sx = Math.cos(sa) * sd;
+    const sy = Math.sin(sa) * sd;
+
+    // Make sure speckle is inside the polygon
+    // (A simple bounding check: sd should be smaller than radius * 0.72)
+    if (sd < radius * 0.65) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, 0.4 + hash(seed * 2, 5) * 0.7, 0, Math.PI * 2);
+      // Half light-speckles, half dark-speckles
+      ctx.fillStyle = hash(seed + 3.1, 7) > 0.5 ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.45)";
+      ctx.fill();
+    }
+  }
+
+  // 5. Rocky ridges and deep crack lines
+  const crackCount = 3 + Math.floor(hash(radius, 5) * 3);
+  for (let i = 0; i < crackCount; i++) {
+    const seed = i * 41.7 + radius;
+    const startIdx = Math.floor(hash(seed, 11) * sides);
+    const endIdx = Math.floor(hash(seed + 13, 17) * sides);
+    if (startIdx === endIdx) continue;
+
+    const p1 = vertices[startIdx];
+    const p2 = vertices[endIdx];
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x * 0.25, p1.y * 0.25);
+    // Draw a jagged/crooked line for natural cracks
+    const midX = (p1.x + p2.x) * 0.4 + (hash(seed * 1.5, 9) - 0.5) * radius * 0.22;
+    const midY = (p1.y + p2.y) * 0.4 + (hash(seed * 2.5, 7) - 0.5) * radius * 0.22;
+    ctx.lineTo(midX, midY);
+    ctx.lineTo(p2.x * 0.75, p2.y * 0.75);
+
+    // Dark crevice line
+    ctx.strokeStyle = "rgba(10, 15, 30, 0.75)";
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+
+    // Secondary highlighted ridge right next to it to give it 3D relief
+    ctx.beginPath();
+    ctx.moveTo(p1.x * 0.25 - 0.5, p1.y * 0.25 - 0.5);
+    ctx.lineTo(midX - 0.5, midY - 0.5);
+    ctx.lineTo(p2.x * 0.75 - 0.5, p2.y * 0.75 - 0.5);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+  }
+
+  // 6. Draw outer sharp rock outline with light direction highlight
+  for (let k = 0; k < sides; k++) {
+    const p1 = vertices[k];
+    const p2 = vertices[(k + 1) % sides];
+
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const dot = nx * lightDir.x + ny * lightDir.y;
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+
+    if (dot > 0.2) {
+      // Top-left outer edges get a bright rock highlight
+      ctx.strokeStyle = `rgba(243, 244, 246, ${0.4 + dot * 0.4})`;
+      ctx.lineWidth = 1.6;
+    } else {
+      // Shadow outer edges get a dark rim
+      ctx.strokeStyle = `rgba(31, 41, 55, ${0.4 + Math.abs(dot) * 0.3})`;
+      ctx.lineWidth = 1.0;
+    }
+    ctx.stroke();
+  }
+
+  // 7. Subtle atmospheric rim glow reflecting the cosmic environment (cyan/purple/magenta)
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+  for (let k = 1; k < sides; k++) {
+    ctx.lineTo(vertices[k].x, vertices[k].y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = color + "26"; // Very soft ambient rim reflections
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function AuroraCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -439,12 +619,35 @@ function AuroraCanvas() {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const stars = Array.from({ length: 180 }, () => ({
+    // Track scroll of the scrollable parent (closest overflow-y-auto)
+    const scrollEl = canvas.closest(".overflow-y-auto") as HTMLElement | null;
+    const onScroll = () => { scrollYRef.current = scrollEl ? scrollEl.scrollTop : window.scrollY; };
+    (scrollEl ?? window).addEventListener("scroll", onScroll, { passive: true });
+
+    // Background stars (small, dim)
+    const stars = Array.from({ length: 140 }, () => ({
       x: Math.random(), y: Math.random(),
-      r: Math.random() * 1.4 + 0.2,
-      a: Math.random(),
-      sp: Math.random() * 0.004 + 0.001,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random() * 0.7 + 0.2,
+      sp: Math.random() * 0.003 + 0.0008,
       c: ["#fff", "#22d3ee", "#a78bfa", "#f472b6"][Math.floor(Math.random() * 4)],
+    }));
+
+    // Floating rock asteroids — varied sizes, speeds, colours, layer depths
+    const rocks = Array.from({ length: 22 }, (_, i) => ({
+      x: Math.random(),          // normalised 0-1
+      y: Math.random(),
+      r: 6 + Math.random() * 28, // radius px
+      sides: 7 + Math.floor(Math.random() * 5),
+      rot: Math.random() * Math.PI * 2,
+      rotSpd: (Math.random() - 0.5) * 0.0025,
+      vx: (Math.random() - 0.5) * 0.00088,  // drift speed (normalised/frame)
+      vy: (Math.random() - 0.35) * 0.00012,
+      depth: 0.3 + Math.random() * 0.7,     // parallax depth (0=fixed,1=full)
+      c: ["#22d3ee", "#a78bfa", "#34d399", "#f472b6", "#f59e0b", "#60a5fa"][
+        Math.floor(Math.random() * 6)],
+      alpha: 0.12 + Math.random() * 0.25,
+      seed: i,
     }));
 
     const auroras = [
@@ -455,13 +658,14 @@ function AuroraCanvas() {
       { x: 0.85, y: 0.5, ry: 75, rx: 370, c: "rgba(251,191,36,0.035)", sp: 0.0007, off: 1.5 },
     ];
 
-    const shoots: { x: number; y: number; a: number; sp: number; len: number }[] = [];
-    let shootT = 0, t = 0;
+    let t = 0;
 
     const draw = () => {
       const W = canvas.width, H = canvas.height;
+      const scrollY = scrollYRef.current;
       ctx.clearRect(0, 0, W, H);
 
+      // ── Aurora glows ──
       auroras.forEach(a => {
         const cx = (a.x + Math.sin(t * a.sp + a.off) * 0.06) * W;
         const cy = (a.y + Math.cos(t * a.sp * 0.7 + a.off) * 0.04) * H;
@@ -474,29 +678,48 @@ function AuroraCanvas() {
         ctx.restore();
       });
 
+      // ── Background stars ──
       stars.forEach(s => {
         const px = ((s.x + t * s.sp * 0.01) % 1) * W;
-        const py = ((s.y + t * s.sp * 0.005) % 1) * H;
+        // subtle parallax: slower stars shift less
+        const py = ((s.y + t * s.sp * 0.005) % 1) * H - scrollY * s.sp * 0.18;
         const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t * s.sp * 35));
-        ctx.beginPath(); ctx.arc(px, py, s.r, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(px, ((py % H) + H) % H, s.r, 0, Math.PI * 2);
         ctx.fillStyle = s.c; ctx.globalAlpha = s.a * pulse; ctx.fill(); ctx.globalAlpha = 1;
       });
 
-      shootT++;
-      if (shootT > 100 && shoots.length < 4) {
-        shoots.push({ x: Math.random() * 0.8, y: Math.random() * 0.4, a: 1, sp: 0.004 + Math.random() * 0.004, len: 0.07 + Math.random() * 0.06 });
-        shootT = 0;
-      }
-      shoots.forEach((s, i) => {
-        const x1 = s.x * W, y1 = s.y * H, x2 = (s.x - s.len) * W, y2 = (s.y - s.len * 0.35) * H;
-        const g = ctx.createLinearGradient(x1, y1, x2, y2);
-        g.addColorStop(0, `rgba(255,255,255,${s.a})`); g.addColorStop(1, "transparent");
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-        ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
-        s.x += s.sp; s.y += s.sp * 0.35; s.a -= 0.013;
-        if (s.a <= 0) shoots.splice(i, 1);
+      // ── Floating rocks with scroll parallax ──
+      rocks.forEach(rock => {
+        // drift position
+        rock.x = ((rock.x + rock.vx) % 1 + 1) % 1;
+        rock.y = ((rock.y + rock.vy) % 1 + 1) % 1;
+        rock.rot += rock.rotSpd;
+
+        // parallax: deeper rocks shift more with scroll
+        const px = rock.x * W;
+        const py = rock.y * H - scrollY * rock.depth * 0.22;
+        const screenY = ((py % (H + rock.r * 2)) + H + rock.r * 2) % (H + rock.r * 2) - rock.r;
+
+        // pulse glow
+        const glowPulse = 0.7 + 0.3 * Math.sin(t * 0.018 + rock.seed);
+        drawRock(ctx, px, screenY, rock.r, rock.sides, rock.rot, rock.c, rock.alpha * glowPulse);
+
+        // glow halo around larger rocks
+        if (rock.r > 16) {
+          ctx.save();
+          ctx.globalAlpha = 0.06 * glowPulse;
+          const halo = ctx.createRadialGradient(px, screenY, rock.r * 0.4, px, screenY, rock.r * 2.5);
+          halo.addColorStop(0, rock.c);
+          halo.addColorStop(1, "transparent");
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(px, screenY, rock.r * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       });
 
+      // ── Hex grid overlay ──
       ctx.globalAlpha = 0.018; ctx.strokeStyle = "#22d3ee"; ctx.lineWidth = 0.5;
       const hex = 70;
       for (let hx = -hex; hx < W + hex; hx += hex * 1.5) {
@@ -518,7 +741,11 @@ function AuroraCanvas() {
     };
     draw();
 
-    return () => { cancelAnimationFrame(animId); ro.disconnect(); };
+    return () => {
+      cancelAnimationFrame(animId);
+      ro.disconnect();
+      (scrollEl ?? window).removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }} />;
@@ -531,238 +758,271 @@ function Planet3D() {
 
   useEffect(() => {
     const mount = mountRef.current!;
-    const W = mount.clientWidth, H = mount.clientHeight;
+    let frameId: number;
+    let cleanupFn: (() => void) | null = null;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    mount.appendChild(renderer.domElement);
+    // ── Defer heavy scene setup so the app shell paints immediately ──
+    const timerId = setTimeout(() => {
+      const W = mount.clientWidth, H = mount.clientHeight;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 200);
-    camera.position.set(0, 0.1, 4.2);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(W, H);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0x223355, 2.8));
-    const sun = new THREE.DirectionalLight(0xffe4a0, 3.0);
-    sun.position.set(-4, 2, 4); scene.add(sun);
-    const rim = new THREE.DirectionalLight(0x3388ff, 1.8);
-    rim.position.set(4, -1, -3); scene.add(rim);
-    const darkSide = new THREE.DirectionalLight(0x1a3a6a, 1.4);
-    darkSide.position.set(5, 0, -5); scene.add(darkSide);
-    const fill = new THREE.PointLight(0x44aaff, 1.2, 20);
-    fill.position.set(2, 3, -4); scene.add(fill);
-    const top = new THREE.DirectionalLight(0x004466, 0.9);
-    top.position.set(0, 6, 0); scene.add(top);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 200);
+      camera.position.set(0, 0.1, 4.2);
 
-    const dayTex = makeTex(2048, (ctx, S) => {
-      const img = ctx.createImageData(S, S);
-      const d = img.data;
-      for (let py = 0; py < S; py++) {
-        for (let px = 0; px < S; px++) {
-          const u = px / S, v = py / S;
-          const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
-          const sx = Math.cos(lat) * Math.cos(lon);
-          const sy = Math.sin(lat);
-          const sz = Math.cos(lat) * Math.sin(lon);
-          const elev = fbm(sx * 2.8 + 2, sy * 2.8 + 3, 8) + fbm(sx * 5 + 7, sz * 5 + 9, 5) * 0.25;
-          const absLat = Math.abs(v - 0.5) * 2;
-          const tropical = Math.max(0, 1 - absLat / 0.35);
-          const temperate = Math.max(0, 1 - Math.abs(absLat - 0.45) / 0.2);
-          const polar = Math.max(0, (absLat - 0.78) / 0.12);
-          const moist = fbm(sx * 1.5 + 11, sz * 1.5 + 13, 4);
-          let r = 0, g = 0, b = 0;
-          if (polar > 0) { const t = Math.min(1, polar * 2); r = Math.round(lerp(140, 200, t)); g = Math.round(lerp(185, 225, t)); b = Math.round(lerp(210, 245, t)); }
-          else if (elev > 0.62) { const snowT = Math.max(0, (elev - 0.66) / 0.06) * Math.max(0, 1 - tropical * 1.5); r = Math.round(lerp(60, 190, snowT)); g = Math.round(lerp(75, 205, snowT)); b = Math.round(lerp(90, 220, snowT)); }
-          else if (elev > 0.54) { const t = (elev - 0.54) / 0.08; r = Math.round(lerp(55, 80, t)); g = Math.round(lerp(100, 130, t)); b = Math.round(lerp(45, 65, t)); }
-          else if (elev > 0.48) {
-            const t = (elev - 0.48) / 0.06;
-            if (tropical > 0.5 && moist > 0.52) { r = Math.round(lerp(10, 22, t)); g = Math.round(lerp(120, 160, t)); b = Math.round(lerp(25, 40, t)); }
-            else if (tropical > 0.4 && moist < 0.46) { r = Math.round(lerp(110, 150, t)); g = Math.round(lerp(160, 185, t)); b = Math.round(lerp(30, 50, t)); }
-            else if (tropical > 0.3 && moist < 0.40) { r = Math.round(lerp(80, 115, t)); g = Math.round(lerp(130, 155, t)); b = Math.round(lerp(80, 100, t)); }
-            else if (temperate > 0.3 && moist > 0.5) { r = Math.round(lerp(15, 35, t)); g = Math.round(lerp(90, 125, t)); b = Math.round(lerp(20, 35, t)); }
-            else if (temperate > 0.2) { r = Math.round(lerp(70, 110, t)); g = Math.round(lerp(140, 170, t)); b = Math.round(lerp(30, 50, t)); }
-            else { r = Math.round(lerp(55, 80, t)); g = Math.round(lerp(110, 135, t)); b = Math.round(lerp(90, 110, t)); }
+      scene.add(new THREE.AmbientLight(0x223355, 2.8));
+      const sun = new THREE.DirectionalLight(0xffe4a0, 3.0);
+      sun.position.set(-4, 2, 4); scene.add(sun);
+      const rim = new THREE.DirectionalLight(0x3388ff, 1.8);
+      rim.position.set(4, -1, -3); scene.add(rim);
+      const darkSide = new THREE.DirectionalLight(0x1a3a6a, 1.4);
+      darkSide.position.set(5, 0, -5); scene.add(darkSide);
+      const fill = new THREE.PointLight(0x44aaff, 1.2, 20);
+      fill.position.set(2, 3, -4); scene.add(fill);
+      const top = new THREE.DirectionalLight(0x004466, 0.9);
+      top.position.set(0, 6, 0); scene.add(top);
+
+      // Async generator to prevent UI freeze
+      const genTexAsync = (size: number, renderChunk: (startY: number, endY: number, S: number, d: Uint8ClampedArray) => void, postProcess?: (ctx: CanvasRenderingContext2D, S: number) => void): Promise<THREE.CanvasTexture> => {
+        return new Promise(resolve => {
+          const c = document.createElement("canvas");
+          c.width = c.height = size;
+          const ctx = c.getContext("2d")!;
+          const img = ctx.createImageData(size, size);
+          const d = img.data;
+          let py = 0;
+          const CHUNK = 16;
+          const next = () => {
+            const endY = Math.min(py + CHUNK, size);
+            renderChunk(py, endY, size, d);
+            py = endY;
+            if (py < size) {
+              requestAnimationFrame(next);
+            } else {
+              ctx.putImageData(img, 0, 0);
+              if (postProcess) postProcess(ctx, size);
+              resolve(new THREE.CanvasTexture(c));
+            }
+          };
+          requestAnimationFrame(next);
+        });
+      };
+
+      const planetMat = new THREE.MeshPhongMaterial({ color: 0x225588, specular: new THREE.Color(0x55aadd), shininess: 55, emissive: new THREE.Color(0x030d1a), emissiveIntensity: 0.22 });
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(1, 128, 128), planetMat);
+      scene.add(planet);
+
+      const cloudsMat = new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false });
+      const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.013, 128, 128), cloudsMat);
+      scene.add(clouds);
+      
+      const moonMat = new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 4 });
+
+      genTexAsync(512, (startY, endY, S, d) => {
+        for (let py = startY; py < endY; py++) {
+          for (let px = 0; px < S; px++) {
+            const u = px / S, v = py / S;
+            const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
+            const sx = Math.cos(lat) * Math.cos(lon); const sy = Math.sin(lat); const sz = Math.cos(lat) * Math.sin(lon);
+            const elev = fbm(sx * 2.8 + 2, sy * 2.8 + 3, 8) + fbm(sx * 5 + 7, sz * 5 + 9, 5) * 0.25;
+            const absLat = Math.abs(v - 0.5) * 2;
+            const tropical = Math.max(0, 1 - absLat / 0.35);
+            const temperate = Math.max(0, 1 - Math.abs(absLat - 0.45) / 0.2);
+            const polar = Math.max(0, (absLat - 0.78) / 0.12);
+            const moist = fbm(sx * 1.5 + 11, sz * 1.5 + 13, 4);
+            let r = 0, g = 0, b = 0;
+            if (polar > 0) { const t = Math.min(1, polar * 2); r = Math.round(lerp(140, 200, t)); g = Math.round(lerp(185, 225, t)); b = Math.round(lerp(210, 245, t)); }
+            else if (elev > 0.62) { const snowT = Math.max(0, (elev - 0.66) / 0.06) * Math.max(0, 1 - tropical * 1.5); r = Math.round(lerp(60, 190, snowT)); g = Math.round(lerp(75, 205, snowT)); b = Math.round(lerp(90, 220, snowT)); }
+            else if (elev > 0.54) { const t = (elev - 0.54) / 0.08; r = Math.round(lerp(55, 80, t)); g = Math.round(lerp(100, 130, t)); b = Math.round(lerp(45, 65, t)); }
+            else if (elev > 0.48) {
+              const t = (elev - 0.48) / 0.06;
+              if (tropical > 0.5 && moist > 0.52) { r = Math.round(lerp(10, 22, t)); g = Math.round(lerp(120, 160, t)); b = Math.round(lerp(25, 40, t)); }
+              else if (tropical > 0.4 && moist < 0.46) { r = Math.round(lerp(110, 150, t)); g = Math.round(lerp(160, 185, t)); b = Math.round(lerp(30, 50, t)); }
+              else if (tropical > 0.3 && moist < 0.40) { r = Math.round(lerp(80, 115, t)); g = Math.round(lerp(130, 155, t)); b = Math.round(lerp(80, 100, t)); }
+              else if (temperate > 0.3 && moist > 0.5) { r = Math.round(lerp(15, 35, t)); g = Math.round(lerp(90, 125, t)); b = Math.round(lerp(20, 35, t)); }
+              else if (temperate > 0.2) { r = Math.round(lerp(70, 110, t)); g = Math.round(lerp(140, 170, t)); b = Math.round(lerp(30, 50, t)); }
+              else { r = Math.round(lerp(55, 80, t)); g = Math.round(lerp(110, 135, t)); b = Math.round(lerp(90, 110, t)); }
+            }
+            else if (elev > 0.455) { const t = (elev - 0.455) / 0.025; r = Math.round(lerp(8, 40, t)); g = Math.round(lerp(110, 155, t)); b = Math.round(lerp(90, 70, t)); }
+            else if (elev > 0.42) { const t = (elev - 0.42) / 0.035; r = Math.round(lerp(5, 15, t)); g = Math.round(lerp(120, 170, t)); b = Math.round(lerp(160, 195, t)); }
+            else if (elev > 0.35) { const t = (elev - 0.35) / 0.07; r = Math.round(lerp(5, 10, t)); g = Math.round(lerp(60, 120, t)); b = Math.round(lerp(130, 175, t)); }
+            else { const t = elev / 0.35; r = Math.round(lerp(2, 8, t)); g = Math.round(lerp(20, 60, t)); b = Math.round(lerp(70, 130, t)); }
+            const idx = (py * S + px) * 4;
+            d[idx] = r; d[idx + 1] = g; d[idx + 2] = b; d[idx + 3] = 255;
           }
-          else if (elev > 0.455) { const t = (elev - 0.455) / 0.025; r = Math.round(lerp(8, 40, t)); g = Math.round(lerp(110, 155, t)); b = Math.round(lerp(90, 70, t)); }
-          else if (elev > 0.42) { const t = (elev - 0.42) / 0.035; r = Math.round(lerp(5, 15, t)); g = Math.round(lerp(120, 170, t)); b = Math.round(lerp(160, 195, t)); }
-          else if (elev > 0.35) { const t = (elev - 0.35) / 0.07; r = Math.round(lerp(5, 10, t)); g = Math.round(lerp(60, 120, t)); b = Math.round(lerp(130, 175, t)); }
-          else { const t = elev / 0.35; r = Math.round(lerp(2, 8, t)); g = Math.round(lerp(20, 60, t)); b = Math.round(lerp(70, 130, t)); }
-          const idx = (py * S + px) * 4;
-          d[idx] = r; d[idx + 1] = g; d[idx + 2] = b; d[idx + 3] = 255;
         }
-      }
-      ctx.putImageData(img, 0, 0);
-      for (let i = 0; i < 18; i++) {
-        const cx = Math.random() * S, cy = S * 0.12 + Math.random() * S * 0.76;
-        const sz = 10 + Math.random() * 18;
-        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz);
-        gr.addColorStop(0, "rgba(180,220,255,0.18)"); gr.addColorStop(1, "rgba(80,160,255,0)");
-        ctx.fillStyle = gr; ctx.fillRect(0, 0, S, S);
-      }
-    });
-
-    const specTex = makeTex(1024, (ctx, S) => {
-      const img = ctx.createImageData(S, S); const d = img.data;
-      for (let py = 0; py < S; py++) {
-        for (let px = 0; px < S; px++) {
-          const u = px / S, v = py / S;
-          const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
-          const sx = Math.cos(lat) * Math.cos(lon); const sy = Math.sin(lat); const sz = Math.cos(lat) * Math.sin(lon);
-          const h = fbm(sx * 2.8 + 2, sy * 2.8 + 3, 6) + fbm(sx * 5 + 7, sz * 5 + 9, 4) * 0.25;
-          const val = h < 0.46 ? 220 : 0;
-          const i = (py * S + px) * 4; d[i] = val; d[i + 1] = val; d[i + 2] = val; d[i + 3] = 255;
+      }, (ctx, S) => {
+        for (let i = 0; i < 18; i++) {
+          const cx = Math.random() * S, cy = S * 0.12 + Math.random() * S * 0.76;
+          const sz = 10 + Math.random() * 18;
+          const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz);
+          gr.addColorStop(0, "rgba(180,220,255,0.18)"); gr.addColorStop(1, "rgba(80,160,255,0)");
+          ctx.fillStyle = gr; ctx.fillRect(0, 0, S, S);
         }
-      }
-      ctx.putImageData(img, 0, 0);
-    });
+      }).then(tex => { planetMat.map = tex; planetMat.color.setHex(0xffffff); planetMat.needsUpdate = true; });
 
-    const cloudTex = makeTex(1024, (ctx, S) => {
-      const img = ctx.createImageData(S, S); const d = img.data;
-      for (let py = 0; py < S; py++) {
-        for (let px = 0; px < S; px++) {
-          const u = px / S, v = py / S;
-          const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
-          const cx = Math.cos(lat) * Math.cos(lon) * 1.8; const cy = Math.sin(lat) * 1.8 + 1.2; const cz = Math.cos(lat) * Math.sin(lon) * 1.8;
-          const n = fbm(cx + 10, cy, 6) * fbm(cz + 10, cy * 0.8, 5);
-          const cloud = Math.max(0, (n - 0.26) / 0.18);
-          const alpha = Math.round(Math.min(1, cloud * 1.6) * 160);
-          const i = (py * S + px) * 4; d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = alpha;
+      genTexAsync(256, (startY, endY, S, d) => {
+        for (let py = startY; py < endY; py++) {
+          for (let px = 0; px < S; px++) {
+            const u = px / S, v = py / S;
+            const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
+            const sx = Math.cos(lat) * Math.cos(lon); const sy = Math.sin(lat); const sz = Math.cos(lat) * Math.sin(lon);
+            const h = fbm(sx * 2.8 + 2, sy * 2.8 + 3, 6) + fbm(sx * 5 + 7, sz * 5 + 9, 4) * 0.25;
+            const val = h < 0.46 ? 220 : 0;
+            const i = (py * S + px) * 4; d[i] = val; d[i + 1] = val; d[i + 2] = val; d[i + 3] = 255;
+          }
         }
-      }
-      ctx.putImageData(img, 0, 0);
-    });
+      }).then(tex => { planetMat.specularMap = tex; planetMat.needsUpdate = true; });
 
-    const moonTex = makeTex(256, (ctx, S) => {
-      const img = ctx.createImageData(S, S); const d = img.data;
-      for (let py = 0; py < S; py++) {
-        for (let px = 0; px < S; px++) {
-          const n = fbm(px / S * 4, py / S * 4, 5);
-          const val = Math.round(lerp(85, 165, n));
-          const i = (py * S + px) * 4; d[i] = val; d[i + 1] = val - 4; d[i + 2] = val - 8; d[i + 3] = 255;
+      genTexAsync(512, (startY, endY, S, d) => {
+        for (let py = startY; py < endY; py++) {
+          for (let px = 0; px < S; px++) {
+            const u = px / S, v = py / S;
+            const lon = (u - 0.5) * 6.2832, lat = (v - 0.5) * 3.1416;
+            const cx = Math.cos(lat) * Math.cos(lon) * 1.8; const cy = Math.sin(lat) * 1.8 + 1.2; const cz = Math.cos(lat) * Math.sin(lon) * 1.8;
+            const n = fbm(cx + 10, cy, 6) * fbm(cz + 10, cy * 0.8, 5);
+            const cloud = Math.max(0, (n - 0.26) / 0.18);
+            const alpha = Math.round(Math.min(1, cloud * 1.6) * 160);
+            const i = (py * S + px) * 4; d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = alpha;
+          }
         }
+      }).then(tex => { cloudsMat.map = tex; cloudsMat.color.setHex(0xffffff); cloudsMat.opacity = 0.72; cloudsMat.needsUpdate = true; });
+
+      genTexAsync(128, (startY, endY, S, d) => {
+        for (let py = startY; py < endY; py++) {
+          for (let px = 0; px < S; px++) {
+            const n = fbm(px / S * 4, py / S * 4, 5);
+            const val = Math.round(lerp(85, 165, n));
+            const i = (py * S + px) * 4; d[i] = val; d[i + 1] = val - 4; d[i + 2] = val - 8; d[i + 3] = 255;
+          }
+        }
+      }, (ctx, S) => {
+        for (let k = 0; k < 12; k++) {
+          const cx = Math.random() * S, cy = Math.random() * S, r = 5 + Math.random() * 16;
+          const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          gr.addColorStop(0, "rgba(45,45,50,0.65)"); gr.addColorStop(1, "rgba(80,80,85,0)");
+          ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+        }
+      }).then(tex => { moonMat.map = tex; moonMat.color.setHex(0xffffff); moonMat.needsUpdate = true; });
+
+      const atmMat = new THREE.ShaderMaterial({
+        uniforms: { c: { value: new THREE.Color(0x00eeff) } },
+        vertexShader: `varying vec3 vN,vV; void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
+        fragmentShader: `uniform vec3 c;varying vec3 vN,vV;void main(){float rim=1.0-abs(dot(vN,vV));gl_FragColor=vec4(c,pow(rim,2.8)*1.3);}`,
+        side: THREE.FrontSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+      });
+      scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.08, 64, 64), atmMat));
+
+      const haloMat = new THREE.ShaderMaterial({
+        uniforms: { c: { value: new THREE.Color(0x1100cc) } },
+        vertexShader: `varying vec3 vN,vV; void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
+        fragmentShader: `uniform vec3 c;varying vec3 vN,vV;void main(){float rim=1.0-abs(dot(vN,vV));gl_FragColor=vec4(c,pow(rim,5.0)*0.85);}`,
+        side: THREE.FrontSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+      });
+      scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.22, 32, 32), haloMat));
+
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.68, 0.014, 4, 200), new THREE.MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.28 }));
+      ring1.rotation.x = Math.PI * 0.40; ring1.rotation.z = Math.PI * 0.05; scene.add(ring1);
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.92, 0.008, 4, 200), new THREE.MeshBasicMaterial({ color: 0x00ddcc, transparent: true, opacity: 0.16 }));
+      ring2.rotation.x = Math.PI * 0.38; ring2.rotation.z = -Math.PI * 0.04; scene.add(ring2);
+      const ring3 = new THREE.Mesh(new THREE.TorusGeometry(2.12, 0.005, 4, 200), new THREE.MeshBasicMaterial({ color: 0x4466ff, transparent: true, opacity: 0.10 }));
+      ring3.rotation.x = Math.PI * 0.39; ring3.rotation.z = Math.PI * 0.02; scene.add(ring3);
+
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 32, 32), moonMat);
+      scene.add(moon);
+
+
+
+      const starCount = 3500;
+      const sPos = new Float32Array(starCount * 3); const sCol = new Float32Array(starCount * 3);
+      const starPalette: [number, number, number][] = [[1, 0.9, 0.7], [0.7, 0.85, 1], [1, 0.95, 0.95], [0.8, 1, 0.8], [1, 0.8, 0.6]];
+      for (let i = 0; i < starCount; i++) {
+        const th = Math.random() * Math.PI * 2; const ph = Math.acos(2 * Math.random() - 1); const r = 55 + Math.random() * 25;
+        sPos[i * 3] = r * Math.sin(ph) * Math.cos(th); sPos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th); sPos[i * 3 + 2] = r * Math.cos(ph);
+        const sc = starPalette[Math.floor(Math.random() * starPalette.length)];
+        sCol[i * 3] = sc[0]; sCol[i * 3 + 1] = sc[1]; sCol[i * 3 + 2] = sc[2];
       }
-      ctx.putImageData(img, 0, 0);
-      for (let k = 0; k < 12; k++) {
-        const cx = Math.random() * S, cy = Math.random() * S, r = 5 + Math.random() * 16;
-        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        gr.addColorStop(0, "rgba(45,45,50,0.65)"); gr.addColorStop(1, "rgba(80,80,85,0)");
-        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-      }
-    });
+      const sg = new THREE.BufferGeometry();
+      sg.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
+      sg.setAttribute("color", new THREE.BufferAttribute(sCol, 3));
+      scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.88 })));
 
-    const planet = new THREE.Mesh(new THREE.SphereGeometry(1, 128, 128),
-      new THREE.MeshPhongMaterial({ map: dayTex, specularMap: specTex, specular: new THREE.Color(0x55aadd), shininess: 55, emissive: new THREE.Color(0x030d1a), emissiveIntensity: 0.22 }));
-    scene.add(planet);
+      const flare = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture((() => {
+          const c = document.createElement("canvas"); c.width = c.height = 128;
+          const ctx2 = c.getContext("2d")!;
+          const gr = ctx2.createRadialGradient(64, 64, 0, 64, 64, 64);
+          gr.addColorStop(0, "rgba(255,230,150,0.95)"); gr.addColorStop(0.3, "rgba(255,180,60,0.4)"); gr.addColorStop(1, "rgba(255,100,20,0)");
+          ctx2.fillStyle = gr; ctx2.fillRect(0, 0, 128, 128); return c;
+        })()),
+        blending: THREE.AdditiveBlending, transparent: true, opacity: 0.5, depthWrite: false,
+      }));
+      flare.scale.set(1.2, 1.2, 1); flare.position.set(-3.5, 1.5, 3); scene.add(flare);
 
-    const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.013, 128, 128),
-      new THREE.MeshPhongMaterial({ map: cloudTex, transparent: true, opacity: 0.72, depthWrite: false }));
-    scene.add(clouds);
+      let isDragging = false, prevX = 0, prevY = 0;
+      let targetRotX = 0.12, targetRotY = 0, curRotX = 0.12, curRotY = 0;
+      let zoom = 4.8;
 
-    const atmMat = new THREE.ShaderMaterial({
-      uniforms: { c: { value: new THREE.Color(0x00eeff) } },
-      vertexShader: `varying vec3 vN,vV; void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
-      fragmentShader: `uniform vec3 c;varying vec3 vN,vV;void main(){float rim=1.0-abs(dot(vN,vV));gl_FragColor=vec4(c,pow(rim,2.8)*1.3);}`,
-      side: THREE.FrontSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
-    });
-    scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.08, 64, 64), atmMat));
+      const el = renderer.domElement;
+      const onDown = (e: MouseEvent) => { isDragging = true; prevX = e.clientX; prevY = e.clientY; };
+      const onMove = (e: MouseEvent) => {
+        if (!isDragging) return;
+        targetRotY += (e.clientX - prevX) * 0.007; targetRotX += (e.clientY - prevY) * 0.007;
+        targetRotX = Math.max(-1.1, Math.min(1.1, targetRotX)); prevX = e.clientX; prevY = e.clientY;
+      };
+      const onUp = () => { isDragging = false; };
+      const onWheel = (e: WheelEvent) => { e.preventDefault(); zoom = Math.max(2.5, Math.min(7, zoom + e.deltaY * 0.006)); };
+      const onTStart = (e: TouchEvent) => { isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; };
+      const onTMove = (e: TouchEvent) => {
+        if (!isDragging) return;
+        targetRotY += (e.touches[0].clientX - prevX) * 0.007; targetRotX += (e.touches[0].clientY - prevY) * 0.007;
+        prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+      };
 
-    const haloMat = new THREE.ShaderMaterial({
-      uniforms: { c: { value: new THREE.Color(0x1100cc) } },
-      vertexShader: `varying vec3 vN,vV; void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
-      fragmentShader: `uniform vec3 c;varying vec3 vN,vV;void main(){float rim=1.0-abs(dot(vN,vV));gl_FragColor=vec4(c,pow(rim,5.0)*0.85);}`,
-      side: THREE.FrontSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
-    });
-    scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.22, 32, 32), haloMat));
+      el.addEventListener("mousedown", onDown); window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+      el.addEventListener("wheel", onWheel, { passive: false }); el.addEventListener("touchstart", onTStart, { passive: true });
+      window.addEventListener("touchmove", onTMove); window.addEventListener("touchend", onUp);
 
-    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.68, 0.014, 4, 200), new THREE.MeshBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.28 }));
-    ring1.rotation.x = Math.PI * 0.40; ring1.rotation.z = Math.PI * 0.05; scene.add(ring1);
-    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.92, 0.008, 4, 200), new THREE.MeshBasicMaterial({ color: 0x00ddcc, transparent: true, opacity: 0.16 }));
-    ring2.rotation.x = Math.PI * 0.38; ring2.rotation.z = -Math.PI * 0.04; scene.add(ring2);
-    const ring3 = new THREE.Mesh(new THREE.TorusGeometry(2.12, 0.005, 4, 200), new THREE.MeshBasicMaterial({ color: 0x4466ff, transparent: true, opacity: 0.10 }));
-    ring3.rotation.x = Math.PI * 0.39; ring3.rotation.z = Math.PI * 0.02; scene.add(ring3);
+      let tAnim = 0;
+      const animate = () => {
+        frameId = requestAnimationFrame(animate); tAnim += 0.005;
+        if (!isDragging) targetRotY += 0.0022;
+        curRotX += (targetRotX - curRotX) * 0.07; curRotY += (targetRotY - curRotY) * 0.07;
+        camera.position.z += (zoom - camera.position.z) * 0.07;
+        planet.rotation.x = curRotX; planet.rotation.y = curRotY;
+        clouds.rotation.x = curRotX; clouds.rotation.y = curRotY + tAnim * 0.014;
+        const ma = tAnim * 0.52;
+        moon.position.set(Math.cos(ma) * 1.9, Math.sin(ma) * 0.22, Math.sin(ma) * 0.95);
+        moon.rotation.y = ma;
+        renderer.render(scene, camera);
+      };
+      animate();
 
-    const moon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 32, 32), new THREE.MeshPhongMaterial({ map: moonTex, shininess: 4 }));
-    scene.add(moon);
-
-    const starCount = 3500;
-    const sPos = new Float32Array(starCount * 3); const sCol = new Float32Array(starCount * 3);
-    const starPalette: [number, number, number][] = [[1, 0.9, 0.7], [0.7, 0.85, 1], [1, 0.95, 0.95], [0.8, 1, 0.8], [1, 0.8, 0.6]];
-    for (let i = 0; i < starCount; i++) {
-      const th = Math.random() * Math.PI * 2; const ph = Math.acos(2 * Math.random() - 1); const r = 55 + Math.random() * 25;
-      sPos[i * 3] = r * Math.sin(ph) * Math.cos(th); sPos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th); sPos[i * 3 + 2] = r * Math.cos(ph);
-      const sc = starPalette[Math.floor(Math.random() * starPalette.length)];
-      sCol[i * 3] = sc[0]; sCol[i * 3 + 1] = sc[1]; sCol[i * 3 + 2] = sc[2];
-    }
-    const sg = new THREE.BufferGeometry();
-    sg.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
-    sg.setAttribute("color", new THREE.BufferAttribute(sCol, 3));
-    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.88 })));
-
-    const flare = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: new THREE.CanvasTexture((() => {
-        const c = document.createElement("canvas"); c.width = c.height = 128;
-        const ctx2 = c.getContext("2d")!;
-        const gr = ctx2.createRadialGradient(64, 64, 0, 64, 64, 64);
-        gr.addColorStop(0, "rgba(255,230,150,0.95)"); gr.addColorStop(0.3, "rgba(255,180,60,0.4)"); gr.addColorStop(1, "rgba(255,100,20,0)");
-        ctx2.fillStyle = gr; ctx2.fillRect(0, 0, 128, 128); return c;
-      })()),
-      blending: THREE.AdditiveBlending, transparent: true, opacity: 0.5, depthWrite: false,
-    }));
-    flare.scale.set(1.2, 1.2, 1); flare.position.set(-3.5, 1.5, 3); scene.add(flare);
-
-    let isDragging = false, prevX = 0, prevY = 0;
-    let targetRotX = 0.12, targetRotY = 0, curRotX = 0.12, curRotY = 0;
-    let zoom = 4.8;
-
-    const el = renderer.domElement;
-    const onDown = (e: MouseEvent) => { isDragging = true; prevX = e.clientX; prevY = e.clientY; };
-    const onMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      targetRotY += (e.clientX - prevX) * 0.007; targetRotX += (e.clientY - prevY) * 0.007;
-      targetRotX = Math.max(-1.1, Math.min(1.1, targetRotX)); prevX = e.clientX; prevY = e.clientY;
-    };
-    const onUp = () => { isDragging = false; };
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); zoom = Math.max(2.5, Math.min(7, zoom + e.deltaY * 0.006)); };
-    const onTStart = (e: TouchEvent) => { isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; };
-    const onTMove = (e: TouchEvent) => {
-      if (!isDragging) return;
-      targetRotY += (e.touches[0].clientX - prevX) * 0.007; targetRotX += (e.touches[0].clientY - prevY) * 0.007;
-      prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
-    };
-
-    el.addEventListener("mousedown", onDown); window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
-    el.addEventListener("wheel", onWheel, { passive: false }); el.addEventListener("touchstart", onTStart, { passive: true });
-    window.addEventListener("touchmove", onTMove); window.addEventListener("touchend", onUp);
-
-    let frameId: number, t = 0;
-    const animate = () => {
-      frameId = requestAnimationFrame(animate); t += 0.005;
-      if (!isDragging) targetRotY += 0.0022;
-      curRotX += (targetRotX - curRotX) * 0.07; curRotY += (targetRotY - curRotY) * 0.07;
-      camera.position.z += (zoom - camera.position.z) * 0.07;
-      planet.rotation.x = curRotX; planet.rotation.y = curRotY;
-      clouds.rotation.x = curRotX; clouds.rotation.y = curRotY + t * 0.014;
-      const ma = t * 0.52;
-      moon.position.set(Math.cos(ma) * 1.9, Math.sin(ma) * 0.22, Math.sin(ma) * 0.95);
-      moon.rotation.y = ma;
-      renderer.render(scene, camera);
-    };
-    animate();
+      cleanupFn = () => {
+        cancelAnimationFrame(frameId);
+        el.removeEventListener("mousedown", onDown); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+        el.removeEventListener("wheel", onWheel); el.removeEventListener("touchstart", onTStart);
+        window.removeEventListener("touchmove", onTMove); window.removeEventListener("touchend", onUp);
+        renderer.dispose();
+        if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      };
+    }, 0); // end setTimeout — deferred so app shell renders immediately
 
     return () => {
+      clearTimeout(timerId);
       cancelAnimationFrame(frameId);
-      el.removeEventListener("mousedown", onDown); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
-      el.removeEventListener("wheel", onWheel); el.removeEventListener("touchstart", onTStart);
-      window.removeEventListener("touchmove", onTMove); window.removeEventListener("touchend", onUp);
-      renderer.dispose();
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      cleanupFn?.();
     };
   }, []);
 
   return (
-    <div ref={mountRef} className="relative flex-shrink-0 cursor-grab active:cursor-grabbing rounded-2xl lg:w-[580px] lg:h-[480px]"
+    <div ref={mountRef} className="relative flex-shrink-0 cursor-grab active:cursor-grabbing  lg:w-[580px] lg:h-[480px]"
       style={{ width: 580, height: 480 }} title="Drag to rotate · Scroll to zoom" />
   );
 }
@@ -948,7 +1208,10 @@ export default function EducationApp() {
           height: windowState === "minimized" ? 42 : windowState === "maximized" ? "100vh" : "100%",
           maxHeight: windowState === "minimized" ? 42 : undefined,
           background: "#04080f",
-          borderRadius: windowState === "maximized" ? 0 : 12,
+          borderTopRightRadius: windowState === "maximized" ? 0 : 12,
+        borderBottomRightRadius: windowState === "maximized" ? 0 : 12,
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
           transition: "height 0.3s ease, max-height 0.3s ease, border-radius 0.2s ease",
@@ -991,7 +1254,7 @@ export default function EducationApp() {
 
             {/* ══ PROFILE ══ */}
             <ScrollReveal>
-              <div className="relative overflow-hidden rounded-[32px] border border-white/10 p-8 mt-5 lg:-mt-10 backdrop-blur-xl"
+              <div className="relative overflow-hidden rounded-r-[32px] border border-white/10 p-8 mt-5 lg:-mt-10 backdrop-blur-xl"
                 style={{ background: "linear-gradient(135deg,rgba(34,211,238,.06) 0%,rgba(8,13,31,.92) 50%,rgba(167,139,250,.06) 100%)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1)" }}>
                 {[["top-0 left-0", "border-t border-l"], ["top-0 right-0", "border-t border-r"], ["bottom-0 left-0", "border-b border-l"], ["bottom-0 right-0", "border-b border-r"]].map(([pos, cls], i) => (
                   <div key={i} className={`absolute ${pos} w-8 h-8 border-cyan-400/30 ${cls}`} style={{ borderRadius: 6 }} />

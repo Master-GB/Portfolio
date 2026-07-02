@@ -2,7 +2,7 @@ import {
   User,
   FolderKanban,
   Code,
-  FileText,
+  File,
   Mail,
   Terminal,
   Settings,
@@ -275,14 +275,14 @@ export const apps = [
   { id: "about", title: "About Me", icon: Monitor, defaultSize: { w: 980, h: 660 } },
   { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1000, h: 650 } },
   { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 840, h: 600 } },
-  { id: "resume", title: "Resume", icon: FileText, defaultSize: { w: 760, h: 700 } },
   { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 920, h: 620 } },
-  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 840, h: 700 } },
+  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 880, h: 750 } },
   { id: "terminal", title: "Terminal", icon: Terminal, defaultSize: { w: 800, h: 500 } },
   { id: "settings", title: "Settings", icon: Settings, defaultSize: { w: 500, h: 440 } },
   { id: "explorer", title: "Explorer", icon: Folder, defaultSize: { w: 800, h: 600 } },
   { id: "notepad", title: "Notepad", icon: Edit3, defaultSize: { w: 640, h: 500 } },
   { id: "robot_assistant", title: "AI Byte", icon: Bot, defaultSize: { w: 840, h: 620 } },
+  { id: "resume", title: "Resume.pdf", icon: File, defaultSize: { w: 760, h: 700 } },
 ] as const;
 
 export type AppId = (typeof apps)[number]["id"];
