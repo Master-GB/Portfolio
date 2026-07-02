@@ -27,6 +27,7 @@ import {
 import { profile } from "@/data/portfolio";
 
 import type { SceneState } from "../contact/Scene3d";
+import GalaxyBackground from "../contact/Galaxybackground";
 
 const Scene3D = dynamic(() => import("../contact/Scene3d"), {
   ssr: false,
@@ -233,26 +234,23 @@ export default function ContactApp() {
     <motion.div
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative h-full overflow-hidden border border-white/10 bg-[#060816] shadow-2xl"
+      className="relative h-full overflow-hidden border border-white/10 bg-gradient-to-br from-[#060816] via-[#0a0f1e] to-[#060816] shadow-2xl"
     >
-      {/* glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-cyan-500/5 blur-3xl" />
-      </div>
+      {/* galaxy backdrop — nebula swirl, orbit rings, pulsing uplink core */}
+      <GalaxyBackground />
 
       {/* layout */}
-      <div className="relative z-10 h-full w-full">
+      <div className="relative z-10 flex h-full w-full items-start overflow-y-auto">
         {/* full-bleed 3D core, weighted toward the right of the panel */}
         <div className="absolute inset-0 z-0 hidden lg:block  ml-[300px]">
           <Scene3D state={sceneState} pulse={pulse} />
         </div>
 
         {/* scrim so the form stays legible over the canvas, fading out toward the right */}
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#060816] from-40% via-[#060816]/80 via-60% to-transparent" />
+        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#030816] from-40% via-[#060816]/80 via-60% to-transparent" />
 
         {/* CONTENT */}
-        <div className="relative z-10 flex h-full w-full max-w-[720px] flex-col items-start overflow-y-auto p-6 text-left">
+        <div className="relative z-10 h-full w-full max-w-[720px] p-6 text-left ml-15">
           {/* top */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -263,7 +261,7 @@ export default function ContactApp() {
             <div className="flex flex-col items-start">
 
               <motion.h2
-                className="bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-3xl font-bold tracking-tight text-transparent"
+                className="bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent"
                 style={{ backgroundSize: "200% auto" }}
                 animate={{ backgroundPosition: ["0% center", "200% center"] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
@@ -271,9 +269,8 @@ export default function ContactApp() {
                 Contact Terminal
               </motion.h2>
 
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
-                Available for internships, collaborations, and select
-                freelance work.
+              <p className="mt-3 max-w-lg text-base leading-relaxed text-slate-300">
+                Available for internships, collaborations, and select freelance work.
               </p>
             </div>
 
@@ -286,12 +283,12 @@ export default function ContactApp() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-4 w-full rounded-2xl border border-white/10 bg-black/50 p-4 font-mono text-xs text-emerald-400"
+            className="mb-6 w-full rounded-2xl border border-indigo-500/20 bg-black/60 p-4 font-mono text-xs text-emerald-400 backdrop-blur-sm shadow-lg shadow-indigo-500/10"
           >
             <div className="mb-3 flex items-center justify-between text-slate-500">
               <div className="flex items-center gap-2">
-                <Terminal size={14} />
-                system.log
+                <Terminal size={14} className="text-indigo-400" />
+                <span className="text-indigo-300">system.log</span>
               </div>
 
             </div>
@@ -398,7 +395,7 @@ export default function ContactApp() {
                 style={{ backgroundSize: "200% auto" }}
                 animate={{ backgroundPosition: ["0% center", "100% center", "0% center"] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-500 via-cyan-500 to-indigo-500 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-opacity duration-300 disabled:cursor-not-allowed"
+                className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-500 via-cyan-500 to-indigo-500 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-opacity duration-300 disabled:cursor-not-allowed  hover:cursor-pointer"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {loading ? (
@@ -440,7 +437,7 @@ export default function ContactApp() {
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 hover:cursor-pointer"
                     >
                       <Send size={18} />
                       Send Message

@@ -70,7 +70,7 @@ export default function Desktop() {
           setContextMenu(null);
         }}
       >
-        <div className="flex h-full flex-col justify-between p-4 md:p-6 text-slate-200">
+        <div className="flex h-full flex-col justify-between py-4 px-1 md:py-6 md:px-2 text-slate-200">
           <div className="flex h-full max-h-[calc(100vh-var(--taskbar-h)-2rem)] flex-col flex-wrap content-start gap-0">
             {apps.map((app) => (
               <DesktopIcon
@@ -82,52 +82,58 @@ export default function Desktop() {
               />
             ))}
           </div>
-
-          {settings.showRobot && (
-            <div
-              className="pointer-events-auto fixed bottom-8 right-2 h-[260px] w-[240px] md:bottom-12 md:right-6 md:h-[340px] md:w-[300px] flex flex-col items-center justify-end group z-[9999]"
-              onMouseEnter={() => {
-                if (settings.soundEnabled) sound.play("beep");
-              }}
-              onClick={() => {
-                if (settings.soundEnabled) sound.play("click");
-                openWindow("robot_assistant");
-              }}
-            >
-              {/* Cycling Glassmorphic Tip Bubble */}
-              <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={tipIndex}
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.35 }}
-                    className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
-                  >
-                    {DESKTOP_TIPS[tipIndex]}
-                    <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* 3D Canvas rendering */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4, duration: 0.8 }}
-                className="h-[210px] w-full md:h-[280px] cursor-pointer relative"
-              >
-                {/* Visual pulse glow on hover */}
-                <div className="absolute inset-0 rounded-full bg-indigo-500/5 opacity-0 group-hover:opacity-100 blur-2xl transition duration-500 pointer-events-none" />
-                <RobotScene interactive={false} />
-              </motion.div>
-            </div>
-          )}
         </div>
 
         <WindowManager />
       </div>
+
+      {/* 3D Robot – rendered as a top-level fixed overlay so it is never
+          affected by layout shifts, scroll events, or z-index stacking
+          from application windows */}
+      {settings.showRobot && (
+        <div
+          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[260px] w-[240px] md:right-2 md:h-[340px] md:w-[300px] flex flex-col items-center justify-end group z-[9999]"
+          style={{ transform: "translateZ(0)", willChange: "transform" }}
+          onMouseEnter={() => {
+            if (settings.soundEnabled) sound.play("beep");
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (settings.soundEnabled) sound.play("click");
+            openWindow("robot_assistant");
+          }}
+          onWheel={(e) => e.stopPropagation()}
+        >
+          {/* Cycling Glassmorphic Tip Bubble */}
+          <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tipIndex}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.35 }}
+                className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
+              >
+                {DESKTOP_TIPS[tipIndex]}
+                <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* 3D Canvas rendering */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="h-[210px] w-full md:h-[280px] cursor-pointer relative"
+          >
+            {/* Visual pulse glow on hover */}
+            <div className="absolute inset-0 rounded-full bg-indigo-500/5 opacity-0 group-hover:opacity-100 blur-2xl transition duration-500 pointer-events-none" />
+            <RobotScene interactive={false} />
+          </motion.div>
+        </div>
+      )}
 
       <motion.div
         initial={{ y: 60, opacity: 0 }}

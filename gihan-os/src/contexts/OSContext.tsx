@@ -70,7 +70,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [settings, setSettings] = useState<OSSettings>(DEFAULT_SETTINGS);
   const [topZ, setTopZ] = useState(10);
-  const welcomeShown = useRef(false);
+  const initialWindowShown = useRef(false);
 
   const focusWindow = useCallback((id: AppId) => {
     setTopZ((z) => {
@@ -179,12 +179,12 @@ export function OSProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // Open welcome window on first boot
+  // Open about window on first boot
   useEffect(() => {
-    if (booted && !welcomeShown.current) {
-      welcomeShown.current = true;
+    if (booted && !initialWindowShown.current) {
+      initialWindowShown.current = true;
       setTimeout(() => {
-        openWindow("welcome");
+        openWindow("about");
       }, 500);
     }
   }, [booted, openWindow]);

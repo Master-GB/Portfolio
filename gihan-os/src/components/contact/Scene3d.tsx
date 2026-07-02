@@ -12,13 +12,22 @@ export type SceneState =
     | "success"
     | "error";
 
+/**
+ * Palette tuned to sit naturally on a #060816 page background.
+ * Instead of generic swatches, every accent lives in the same
+ * "electric signal on deep-space navy" family: cool blues/cyans
+ * for calm + data states, a warm amber for the destructive one,
+ * and a magenta-shifted red for error so it still reads as part
+ * of the same violet-leaning world instead of clashing with it.
+ */
+
 const STATE_COLORS: Record<SceneState, string> = {
-    idle: "#6366f1",
-    typing: "#22d3ee",
-    deleting: "#f97316",
-    sending: "#e0f2fe",
-    success: "#34d399",
-    error: "#ef4444",
+    idle: "#041adcff",
+    typing: "#4eeaff",
+    deleting: "#ff8a52",
+    sending: "#a6f0ff",
+    success: "#3ffcc4",
+    error: "#ff5c7a",
 };
 
 const STATE_LABELS: Record<SceneState, string> = {
@@ -29,6 +38,19 @@ const STATE_LABELS: Record<SceneState, string> = {
     success: "DELIVERED",
     error: "LINK FAILED",
 };
+
+// chassis / trim tokens — deliberately lighter than PAGE_BG so the
+// silhouette has real contrast; the bezel stays darkest of the group
+// so the glowing screen is still the brightest thing on the face
+const CHASSIS_INK = "#1d2748"; // main body — clearly lighter than the page bg now
+const CHASSIS_PANEL = "#0a0e1c"; // bezel, stays darkest so the screen still pops
+const STEEL_TRIM = "#2c3660"; // neck / base / knobs
+const SCREEN_VOID = "#080b18"; // CRT background, ties screen to page bg
+
+// muted HUD text tokens (replace generic Tailwind slate, which read
+// too neutral-gray against the blue-tinted background)
+const HUD_MUTED = "#5b6a94";
+const HUD_FAINT = "#2e3760";
 
 // resting x-offset that keeps the bot weighted toward the right
 // half of the canvas, mirrors the layout of the original scene
@@ -50,7 +72,7 @@ function drawFace(
     const color = STATE_COLORS[state];
 
     // background
-    ctx.fillStyle = "#04070a";
+    ctx.fillStyle = SCREEN_VOID;
     ctx.fillRect(0, 0, w, h);
 
     // scanlines
@@ -215,6 +237,14 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
     const ring1Ref = useRef<THREE.Mesh>(null);
     const ring2Ref = useRef<THREE.Mesh>(null);
 
+    // signature addition: a hologram-style contact pad beneath the
+    // bot. It's the one bold move — a soft disc + ring that breathes
+    // and tints to the current state color, visually welding the
+    // chassis to the dark page background instead of leaving it
+    // floating as a mismatched box on top of it.
+    const padRef = useRef<THREE.Mesh>(null);
+    const padRingRef = useRef<THREE.Mesh>(null);
+
     const flashRef = useRef(0);
     const lastPulse = useRef(pulse);
     const blinkTimer = useRef(0);
@@ -233,7 +263,21 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
     }, []);
 
     const targetColor = useMemo(() => new THREE.Color(STATE_COLORS[state]), [state]);
-    const bodyColor = useMemo(() => new THREE.Color("#1b2230"), []);
+    const bodyColor = useMemo(() => new THREE.Color(CHASSIS_INK), []);
+
+    // trailing power cable — a simple sagging curve from a port on
+    // the chassis back down to the base, reinforcing the "plugged
+    // into something" read the antenna mount started
+    const cableCurve = useMemo(
+        () =>
+            new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0.35, -0.55, -0.3),
+                new THREE.Vector3(0.62, -0.85, -0.28),
+                new THREE.Vector3(0.55, -1.02, -0.05),
+                new THREE.Vector3(0.3, -1.06, 0.22),
+            ]),
+        []
+    );
 
     // per-keystroke flash, fired whenever the parent bumps `pulse`
     useEffect(() => {
@@ -305,7 +349,7 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
             bodyMatRef.current.emissive.lerp(targetColor, lerpSpeed * 2);
             bodyMatRef.current.emissiveIntensity = THREE.MathUtils.lerp(
                 bodyMatRef.current.emissiveIntensity,
-                0.15 + flashRef.current * 0.3,
+                0.28 + flashRef.current * 0.35,
                 lerpSpeed
             );
         }
@@ -314,7 +358,7 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
             antennaMatRef.current.emissive.lerp(targetColor, lerpSpeed * 2);
             antennaMatRef.current.emissiveIntensity = THREE.MathUtils.lerp(
                 antennaMatRef.current.emissiveIntensity,
-                state === "sending" ? 2.6 : 1.1 + Math.sin(t * 3) * 0.3,
+                state === "sending" ? 3 : 1.4 + Math.sin(t * 3) * 0.3,
                 lerpSpeed
             );
         }
@@ -323,7 +367,7 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
             screenLightRef.current.color.lerp(targetColor, lerpSpeed * 2);
             screenLightRef.current.intensity = THREE.MathUtils.lerp(
                 screenLightRef.current.intensity,
-                1.4 + flashRef.current * 1.5,
+                1.9 + flashRef.current * 1.5,
                 lerpSpeed
             );
         }
@@ -341,22 +385,51 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
                 mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0, lerpSpeed);
             }
         });
+
+        // contact pad: gentle idle breathing, brighter kick on
+        // keystrokes/state changes so it still reads as "alive"
+        // even though it sits low in the frame
+        if (padRef.current) {
+            const mat = padRef.current.material as THREE.MeshBasicMaterial;
+            mat.color.lerp(targetColor, lerpSpeed * 2);
+            const breathe = 0.14 + Math.sin(t * 1.1) * 0.04;
+            mat.opacity = THREE.MathUtils.lerp(
+                mat.opacity,
+                breathe + flashRef.current * 0.15,
+                lerpSpeed
+            );
+        }
+        if (padRingRef.current) {
+            const mat = padRingRef.current.material as THREE.MeshBasicMaterial;
+            mat.color.lerp(targetColor, lerpSpeed * 2);
+            const ringPulse = 0.45 + Math.sin(t * 1.1 + 1) * 0.15;
+            mat.opacity = THREE.MathUtils.lerp(mat.opacity, ringPulse, lerpSpeed);
+        }
     });
 
     return (
         <group ref={groupRef} position={[REST_X, 0, 0]}>
-            {/* antenna */}
-            <mesh position={[0, 1.55, 0]}>
-                <cylinderGeometry args={[0.025, 0.025, 0.5, 8]} />
-                <meshStandardMaterial color="#333c4d" />
+            {/* antenna mount — a collar welded flush to the chassis roof
+                so the rod has something to actually attach to */}
+            <mesh position={[0, 0.735, 0]}>
+                <cylinderGeometry args={[0.09, 0.12, 0.07, 12]} />
+                <meshStandardMaterial color={STEEL_TRIM} roughness={0.4} metalness={0.5} />
             </mesh>
-            <mesh position={[0, 1.82, 0]}>
-                <sphereGeometry args={[0.07, 16, 16]} />
+
+            {/* antenna rod — bottom sits flush on the mount collar */}
+            <mesh position={[0, 1.05, 0]}>
+                <cylinderGeometry args={[0.022, 0.032, 0.56, 8]} />
+                <meshStandardMaterial color={STEEL_TRIM} roughness={0.4} metalness={0.5} />
+            </mesh>
+
+            {/* antenna tip — overlaps the rod top, no floating gap */}
+            <mesh position={[0, 1.36, 0]}>
+                <sphereGeometry args={[0.08, 16, 16]} />
                 <meshStandardMaterial
                     ref={antennaMatRef}
-                    color="#111111"
+                    color={CHASSIS_PANEL}
                     emissive={STATE_COLORS.idle}
-                    emissiveIntensity={1}
+                    emissiveIntensity={1.4}
                 />
             </mesh>
 
@@ -365,18 +438,49 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
                 <boxGeometry args={[1.9, 1.4, 0.7]} />
                 <meshStandardMaterial
                     ref={bodyMatRef}
-                    color="#1b2230"
+                    color={CHASSIS_INK}
                     emissive={STATE_COLORS.idle}
-                    emissiveIntensity={0.15}
-                    roughness={0.4}
-                    metalness={0.3}
+                    emissiveIntensity={0.28}
+                    roughness={0.28}
+                    metalness={0.5}
                 />
+            </mesh>
+
+            {/* top vent grilles — flank the antenna mount */}
+            {[-1, 1].map((side) => (
+                <group key={`vent-${side}`} position={[side * 0.55, 0.705, 0]}>
+                    {[0, 1, 2, 3].map((i) => (
+                        <mesh key={i} position={[0, 0, -0.12 + i * 0.08]}>
+                            <boxGeometry args={[0.32, 0.015, 0.045]} />
+                            <meshStandardMaterial color={CHASSIS_PANEL} roughness={0.7} metalness={0.2} />
+                        </mesh>
+                    ))}
+                </group>
+            ))}
+
+            {/* corner rivets on the screen bezel */}
+            {[
+                [-0.68, 0.47],
+                [0.68, 0.47],
+                [-0.68, -0.37],
+                [0.68, -0.37],
+            ].map(([x, y], i) => (
+                <mesh key={`rivet-${i}`} position={[x, y, 0.4]} rotation={[Math.PI / 2, 0, 0]}>
+                    <cylinderGeometry args={[0.025, 0.025, 0.025, 10]} />
+                    <meshStandardMaterial color={STEEL_TRIM} roughness={0.3} metalness={0.6} />
+                </mesh>
+            ))}
+
+            {/* trailing power cable — sags from a rear port down to the base */}
+            <mesh>
+                <tubeGeometry args={[cableCurve, 32, 0.032, 8, false]} />
+                <meshStandardMaterial color={CHASSIS_PANEL} roughness={0.55} metalness={0.15} />
             </mesh>
 
             {/* screen bezel */}
             <mesh position={[0, 0.05, 0.36]}>
                 <boxGeometry args={[1.55, 1.05, 0.06]} />
-                <meshStandardMaterial color="#05070a" roughness={0.6} />
+                <meshStandardMaterial color={CHASSIS_PANEL} roughness={0.6} />
             </mesh>
 
             {/* screen */}
@@ -399,23 +503,45 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
             {/* neck */}
             <mesh position={[0, -0.85, 0]}>
                 <cylinderGeometry args={[0.12, 0.18, 0.3, 12]} />
-                <meshStandardMaterial color="#252c3a" roughness={0.5} metalness={0.3} />
+                <meshStandardMaterial color={STEEL_TRIM} roughness={0.5} metalness={0.3} />
             </mesh>
 
             {/* base */}
             <mesh position={[0, -1.05, 0]}>
                 <cylinderGeometry args={[0.5, 0.5, 0.08, 24]} />
-                <meshStandardMaterial color="#1b2230" roughness={0.5} metalness={0.3} />
+                <meshStandardMaterial color={CHASSIS_INK} roughness={0.5} metalness={0.3} />
             </mesh>
 
             {/* knobs */}
             <mesh position={[-0.75, -0.55, 0.37]} rotation={[Math.PI / 2, 0, 0]}>
                 <cylinderGeometry args={[0.06, 0.06, 0.05, 12]} />
-                <meshStandardMaterial color="#3a4256" />
+                <meshStandardMaterial color={STEEL_TRIM} />
             </mesh>
             <mesh position={[0.75, -0.55, 0.37]} rotation={[Math.PI / 2, 0, 0]}>
                 <cylinderGeometry args={[0.06, 0.06, 0.05, 12]} />
-                <meshStandardMaterial color="#3a4256" />
+                <meshStandardMaterial color={STEEL_TRIM} />
+            </mesh>
+
+            {/* contact pad — grounds the bot in the page background */}
+            <mesh ref={padRef} position={[0, -1.16, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[1.35, 48]} />
+                <meshBasicMaterial
+                    color={STATE_COLORS.idle}
+                    transparent
+                    opacity={0.14}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                />
+            </mesh>
+            <mesh ref={padRingRef} position={[0, -1.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[1.3, 1.37, 64]} />
+                <meshBasicMaterial
+                    color={STATE_COLORS.idle}
+                    transparent
+                    opacity={0.45}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                />
             </mesh>
         </group>
     );
@@ -424,9 +550,15 @@ function TerminalBot({ state, pulse }: { state: SceneState; pulse: number }) {
 function Lights() {
     return (
         <>
-            <ambientLight intensity={0.45} />
-            <pointLight position={[4, 4, 4]} intensity={1} color="#818cf8" />
-            <pointLight position={[-4, -2, -3]} intensity={0.7} color="#22d3ee" />
+            <ambientLight intensity={0.48} color="#28336a" />
+            <pointLight position={[4, 4, 4]} intensity={1.4} color="#7c89ff" />
+            <pointLight position={[-4, -2, -3]} intensity={1.0} color="#4eeaff" />
+            {/* cool rim/kicker light from behind-above — this is what
+                actually pulls the silhouette off a near-black background */}
+            <pointLight position={[0, 3, -4]} intensity={1.2} color="#c9d4ff" />
+            {/* low fill, same hue family as the page background, keeps
+                the underside of the chassis from dropping to pure black */}
+            <pointLight position={[0, -2.5, 1.5]} intensity={0.4} color="#1c274e" />
         </>
     );
 }
@@ -439,7 +571,7 @@ export default function Scene3D({
     pulse: number;
 }) {
     return (
-        <div className="relative h-full w-full">
+        <div className="relative h-full w-full" style={{ backgroundColor: "transparent" }}>
             <Canvas
                 camera={{ position: [0, 0, 6], fov: 45 }}
                 dpr={[1, 1.5]}
@@ -450,7 +582,10 @@ export default function Scene3D({
             </Canvas>
 
             {/* HUD overlay, mirrors the terminal panel on the left */}
-            <div className="pointer-events-none absolute right-6 top-6 select-none text-right font-mono text-[10px] tracking-widest text-slate-500">
+            <div
+                className="pointer-events-none absolute right-6 top-6 select-none text-right font-mono text-[10px] tracking-widest"
+                style={{ color: HUD_MUTED }}
+            >
                 <div className="flex items-center gap-2">
                     <span
                         className="h-1.5 w-1.5 rounded-full transition-colors duration-300"
@@ -462,9 +597,7 @@ export default function Scene3D({
                 </div>
             </div>
 
-            <div className="pointer-events-none absolute bottom-6 right-6 select-none font-mono text-[10px] tracking-widest text-slate-600">
-                NODE://contact-uplink
-            </div>
+           
         </div>
     );
 }

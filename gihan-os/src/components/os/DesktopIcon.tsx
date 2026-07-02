@@ -9,10 +9,6 @@ const ICON_THEMES: Record<
   AppId,
   { gradient: string; shadow: string }
 > = {
-  welcome: {
-    gradient: "from-indigo-400 to-cyan-500",
-    shadow: "shadow-indigo-900/50",
-  },
   about: {
     gradient: "from-sky-400 to-blue-600",
     shadow: "shadow-blue-900/50",
@@ -48,14 +44,6 @@ const ICON_THEMES: Record<
   explorer: {
     gradient: "from-yellow-300 to-yellow-500",
     shadow: "shadow-yellow-900/50",
-  },
-  music: {
-    gradient: "from-green-400 to-green-600",
-    shadow: "shadow-green-900/50",
-  },
-  browser: {
-    gradient: "from-blue-400 to-blue-600",
-    shadow: "shadow-blue-900/50",
   },
   notepad: {
     gradient: "from-amber-200 to-amber-400",
