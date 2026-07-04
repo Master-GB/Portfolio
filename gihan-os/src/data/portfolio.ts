@@ -436,7 +436,7 @@ export const apps = [
   { id: "terminal", title: "Terminal", icon: Terminal, defaultSize: { w: 800, h: 500 } },
   { id: "settings", title: "Settings", icon: Settings, defaultSize: { w: 500, h: 440 } },
   { id: "explorer", title: "Explorer", icon: Folder, defaultSize: { w: 800, h: 600 } },
-  { id: "notepad", title: "Notepad", icon: Edit3, defaultSize: { w: 640, h: 500 } },
+  { id: "notepad", title: "Notepad", icon: Edit3, defaultSize: { w: 800, h: 600 } },
   { id: "robot_assistant", title: "AI Byte", icon: Bot, defaultSize: { w: 840, h: 620 } },
   { id: "resume", title: "Resume.pdf", icon: File, defaultSize: { w: 760, h: 700 } },
 ] as const;
