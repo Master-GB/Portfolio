@@ -14,14 +14,19 @@ export interface WindowInstance {
   zIndex: number;
 }
 
-export type WallpaperId = "aurora" | "midnight" | "nebula" | "matrix" | "anime" | "macos" | "minimalist";
+export type WallpaperId =
+  | "starfield"      // Warp-speed 3D star field
+  | "nebula_pulse"   // Breathing nebula gas clouds
+  | "black_hole"     // Rotating accretion disc particle system
+  | "cosmic_dust"    // Galaxy-arm spiral dust drift
+  | "aurora_galaxy"; // Space aurora curtains
 
 export interface OSSettings {
   wallpaper: WallpaperId;
   reduceMotion: boolean;
   showRobot: boolean;
   soundEnabled: boolean;
-  robotAvatar: "robot" | "astronaut" | "humanoid";
+  robotAvatar: "robot";
   robotTheme: "cyan" | "rose" | "emerald" | "gold" | "cyberpunk";
   robotHologram: boolean;
   robotLookAtMouse: boolean;

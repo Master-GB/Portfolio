@@ -217,7 +217,7 @@ export default function Desktop() {
 
           ref={robotRef}
 
-          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[260px] w-[240px] md:right-2 md:h-[340px] md:w-[300px] flex flex-col items-center justify-end group z-[9999]"
+          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[260px] w-[240px] md:right-2 md:h-[340px] md:w-[300px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
 
           onMouseEnter={() => {
 

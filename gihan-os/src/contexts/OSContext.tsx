@@ -35,7 +35,7 @@ interface OSContextType {
 const OSContext = createContext<OSContextType | null>(null);
 
 const DEFAULT_SETTINGS: OSSettings = {
-  wallpaper: "aurora",
+  wallpaper: "starfield",
   reduceMotion: false,
   showRobot: true,
   soundEnabled: false,
