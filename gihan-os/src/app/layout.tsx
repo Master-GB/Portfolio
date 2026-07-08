@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./galaxy.css";
 
 import { OSProvider } from "@/contexts/OSContext";
 import BootScreen from "@/components/boot/BootScreen";

@@ -10,12 +10,10 @@ import { THEME_COLORS } from "@/lib/theme";
 
 const AVATAR_MODELS = {
   robot: "/models/robot.glb",
-  astronaut: "/models/astronaut.glb",
-  humanoid: "/models/humanoid.glb",
 };
 
 interface RobotModelProps {
-  avatar: "robot" | "astronaut" | "humanoid";
+  avatar: "robot";
   activeAnimation?: string;
   lookAtMouse: boolean;
   onAnimationsLoaded?: (names: string[]) => void;
@@ -53,9 +51,6 @@ function RobotModel({
           if (avatar === "robot") {
             mat.roughness = 0.3;
             mat.metalness = 0.7;
-          } else if (avatar === "humanoid") {
-            mat.roughness = 0.2;
-            mat.metalness = 0.9;
           }
         }
       }
@@ -114,10 +109,8 @@ function RobotModel({
   });
 
   // Calculate dynamic scaling and positions based on model characteristics
-  const scale =
-    avatar === "robot" ? 0.20 : avatar === "astronaut" ? 0.52 : avatar === "humanoid" ? 0.62 : 0.52;
-  const positionY =
-    avatar === "robot" ? -0.9 : avatar === "astronaut" ? -0.85 : avatar === "humanoid" ? -0.92 : -0.72;
+  const scale = 0.20;
+  const positionY = -0.9;
 
   return (
     <primitive
@@ -184,11 +177,9 @@ function HologramRing({ themeColor }: { themeColor: string }) {
 
 // Preload models for responsive switching
 useGLTF.preload(AVATAR_MODELS.robot);
-useGLTF.preload(AVATAR_MODELS.astronaut);
-useGLTF.preload(AVATAR_MODELS.humanoid);
 
 interface RobotSceneProps {
-  avatar?: "robot" | "astronaut" | "humanoid";
+  avatar?: "robot";
   theme?: "cyan" | "rose" | "emerald" | "gold" | "cyberpunk";
   hologram?: boolean;
   lookAtMouse?: boolean;
@@ -269,7 +260,7 @@ export default function RobotScene({
           maxPolarAngle={Math.PI / 1.8}
           autoRotate={!activeAnimation}
           autoRotateSpeed={0.55}
-          target={[0, avatar === "humanoid" ? 0.05 : -0.05, 0]}
+          target={[0, -0.05, 0]}
         />
       )}
     </Canvas>
