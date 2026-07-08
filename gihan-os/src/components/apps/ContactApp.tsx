@@ -240,17 +240,17 @@ export default function ContactApp() {
       <GalaxyBackground />
 
       {/* layout */}
-      <div className="relative z-10 flex h-full w-full items-start overflow-y-auto">
-        {/* full-bleed 3D core, weighted toward the right of the panel */}
-        <div className="absolute inset-0 z-0 hidden lg:block  ml-[300px]">
+      <div className="relative z-10 flex h-full w-full items-start overflow-y-auto os-scrollbar">
+        {/* full-bleed 3D core: hidden on mobile, prominent on the right for laptop */}
+        <div className="hidden xl:block absolute inset-0 z-0 opacity-100 xl:ml-[350px]">
           <Scene3D state={sceneState} pulse={pulse} />
         </div>
 
-        {/* scrim so the form stays legible over the canvas, fading out toward the right */}
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#030816] from-40% via-[#060816]/80 via-60% to-transparent" />
+        {/* scrim so the form stays legible over the canvas, fading out toward the right on desktop, solid-ish on mobile */}
+        <div className="pointer-events-none absolute inset-0 z-[1] bg-[#060816]/70 xl:bg-transparent xl:bg-gradient-to-r xl:from-[#030816] xl:from-40% xl:via-[#060816]/80 xl:via-60% xl:to-transparent" />
 
         {/* CONTENT */}
-        <div className="relative z-10 h-full w-full max-w-[720px] p-6 text-left ml-15">
+        <div className="relative z-10 h-full w-full max-w-[720px] p-5 sm:p-8 xl:p-12 text-left mx-auto xl:mx-0 flex flex-col justify-center">
           {/* top */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -261,7 +261,7 @@ export default function ContactApp() {
             <div className="flex flex-col items-start">
 
               <motion.h2
-                className="bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent"
+                className="bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-3xl sm:text-4xl font-bold tracking-tight text-transparent"
                 style={{ backgroundSize: "200% auto" }}
                 animate={{ backgroundPosition: ["0% center", "200% center"] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
