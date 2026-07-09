@@ -176,21 +176,24 @@ export default function Desktop() {
           <div className="flex h-full max-h-[calc(100vh-var(--taskbar-h)-2rem)] flex-col flex-wrap content-start gap-0">
 
             {apps.map((app) => (
-
-              <DesktopIcon
-
-                key={app.id}
-
-                id={app.id}
-
-                title={app.title}
-
-                icon={app.icon}
-
-                onClick={() => openWindow(app.id)}
-
-              />
-
+              app.id === "robot_assistant" ? (
+                <div key={app.id} className="hidden xl:flex">
+                  <DesktopIcon
+                    id={app.id}
+                    title={app.title}
+                    icon={app.icon}
+                    onClick={() => openWindow(app.id)}
+                  />
+                </div>
+              ) : (
+                <DesktopIcon
+                  key={app.id}
+                  id={app.id}
+                  title={app.title}
+                  icon={app.icon}
+                  onClick={() => openWindow(app.id)}
+                />
+              )
             ))}
 
           </div>

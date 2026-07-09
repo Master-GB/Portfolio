@@ -194,7 +194,7 @@ export default function Window({ window: win, children }: Props) {
 
       onMouseDown={() => focusWindow(win.id)}
 
-      className={cn("os-window fixed flex flex-col overflow-hidden shadow-2xl shadow-black/50 bg-black", isMaximized ? "rounded-none" : "rounded-lg")}
+      className={cn("os-window fixed flex flex-col overflow-hidden shadow-2xl shadow-black/50 bg-black", "rounded-none")}
 
       style={{
 

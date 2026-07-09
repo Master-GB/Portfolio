@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useOS } from "@/contexts/OSContext";
+import type { WallpaperId } from "@/types/os";
 
 import { THEME_COLORS } from "@/lib/theme";
 import { sound } from "@/lib/sound";
@@ -133,14 +134,12 @@ export default function RobotAssistantApp() {
 
     if (raw.includes("wallpaper") || raw.includes("theme") || raw.includes("background")) {
       // Cycle wallpaper
-      const wallpapers: ("aurora" | "midnight" | "nebula" | "matrix" | "anime" | "macos" | "minimalist")[] = [
-        "aurora",
-        "midnight",
-        "nebula",
-        "matrix",
-        "anime",
-        "macos",
-        "minimalist",
+      const wallpapers: WallpaperId[] = [
+        "starfield",
+        "nebula_pulse",
+        "black_hole",
+        "cosmic_dust",
+        "aurora_galaxy",
       ];
       const nextWp = wallpapers[Math.floor(Math.random() * wallpapers.length)];
       return {
@@ -347,30 +346,6 @@ export default function RobotAssistantApp() {
             >
               <RefreshCw size={12} />
             </button>
-          </div>
-
-          {/* Avatar switch */}
-          <div>
-            <span className="mb-2 block text-[11px] text-slate-500 uppercase tracking-wide">
-              Assistant Model
-            </span>
-            <div className="grid grid-cols-3 gap-1">
-              {(["robot", "astronaut", "humanoid"] as const).map((av) => (
-                <button
-                  key={av}
-                  onClick={() => {
-                    playSound("click");
-                    updateSetting("robotAvatar", av);
-                  }}
-                  className={`rounded-lg py-1.5 text-xs font-medium border transition capitalize ${settings.robotAvatar === av
-                      ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
-                      : "bg-slate-950/40 text-slate-400 border-slate-800/80 hover:bg-slate-800/50"
-                    }`}
-                >
-                  {av === "robot" ? "Byte 🤖" : av === "astronaut" ? "Nova 👩‍🚀" : "Apex 🦾"}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Theme switcher */}
