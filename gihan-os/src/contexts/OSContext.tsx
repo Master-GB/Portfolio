@@ -43,6 +43,28 @@ const DEFAULT_SETTINGS: OSSettings = {
   robotTheme: "cyan",
   robotHologram: true,
   robotLookAtMouse: true,
+  // Display Settings
+  themeMode: "dark",
+  accentColor: "#06b6d4",
+  taskbarPosition: "bottom",
+  taskbarTransparency: 0.8,
+  desktopIconSize: "medium",
+  // System Settings
+  bootAnimation: true,
+  autoOpenWelcome: true,
+  windowSnap: true,
+  desktopGrid: false,
+  // Accessibility
+  highContrast: false,
+  reducedParticles: false,
+  largerText: false,
+  // Performance
+  disable3DRobot: false,
+  lowPowerMode: false,
+  // Personalization
+  desktopIconLabels: true,
+  startMenuLayout: "expanded",
+  clockFormat: "12h",
 };
 
 function getApp(id: AppId) {

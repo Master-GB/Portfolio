@@ -179,7 +179,7 @@ function CertModal({ cert, onClose }: { cert: typeof certificates[0]; onClose: (
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="absolute inset-0 z-[9999] flex items-center justify-center overflow-auto p-4"
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(16px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -203,8 +203,9 @@ function CertModal({ cert, onClose }: { cert: typeof certificates[0]; onClose: (
       <div
         className="relative flex flex-col rounded-[28px] overflow-hidden shadow-2xl"
         style={{
-          width: "min(92vw, 900px)",
-          maxHeight: "92vh",
+          width: "min(92%, 1100px)",
+          maxHeight: "92%",
+          flexShrink: 0,
           background: "linear-gradient(145deg, #07101f 0%, #050c1a 60%, #020810 100%)",
           border: `1px solid ${cert.color}33`,
           boxShadow: `0 0 80px ${cert.color}22, 0 40px 80px rgba(0,0,0,0.8)`,
@@ -1199,9 +1200,6 @@ export default function EducationApp() {
 
   return (
     <>
-      {/* ── Certificate Modal (portal-like, outside main div) ── */}
-      {openCert && <CertModal cert={openCert} onClose={() => setOpenCert(null)} />}
-
       <div className="flex flex-col overflow-hidden"
         style={{
           position: "relative", width: "100%",
@@ -1439,6 +1437,9 @@ export default function EducationApp() {
 
           </div>
         </div>
+
+        {/* ── Certificate Modal (confined to this app window) ── */}
+        {openCert && <CertModal cert={openCert} onClose={() => setOpenCert(null)} />}
       </div>
     </>
   );

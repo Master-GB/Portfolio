@@ -748,12 +748,12 @@ interface Props {
 }
 
 export default function Wallpaper({ id }: Props) {
-  const { windows } = useOS();
-  
-  const isAppOpenRef = useRef(windows.length > 0);
+  const { windows, startMenuOpen } = useOS();
+
+  const isAppOpenRef = useRef(windows.length > 0 || startMenuOpen);
   useEffect(() => {
-    isAppOpenRef.current = windows.length > 0;
-  }, [windows.length]);
+    isAppOpenRef.current = windows.length > 0 || startMenuOpen;
+  }, [windows.length, startMenuOpen]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">

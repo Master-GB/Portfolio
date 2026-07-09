@@ -1,59 +1,187 @@
-.galaxy-bg::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 20% 30%, #fff 0.5px, transparent 0.5px),
-              radial-gradient(circle at 80% 70%, #fff 0.5px, transparent 0.5px),
-              radial-gradient(circle at 50% 50%, #fff 0.5px, transparent 0.5px);
-  background-size: 3px 3px;
-  animation: moveStars 30s linear infinite;
-}
+/* ════════════════════════════════════════════════════════════════════
+   Galaxy wallpaper system — CSS keyframes & icon hover effects
+   ════════════════════════════════════════════════════════════════════ */
 
-.galaxy-bg::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(255,255,255,0.8) 0%,
-    rgba(255,255,255,0.8) 2px,
-    transparent 2px,
-    transparent 100%
-  );
-  background-size: 2px 100%;
-  opacity: 0.6;
-  animation: meteor 5s linear infinite;
-}
-.galaxy-bg {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background-color: #000; /* solid black backdrop */
-  animation: rock 30s ease-in-out infinite;
-}
-
-/* Meteor shower */
-
-
-@keyframes rock {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(0.8deg); }
-}
-
-@keyframes moveStars {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-50%, -50%); }
-}
-
-@keyframes meteor {
-  from { transform: translate(0, 0); }
-  to { transform: translate(150%, 150%); }
-}
+/* ── Legacy helpers (kept for backward compat) ─────────────────────── */
 .grid-bg { display: none; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   DESKTOP ICON HOVER EFFECTS
+   Each effect is triggered by a data-wallpaper attribute on the parent.
+   Applied via DesktopIcon.tsx reading useOS().settings.wallpaper.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. STARFIELD — Stardust Burst ────────────────────────────────── */
+.hover-starfield {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-starfield:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow:
+    0 0 12px 3px rgba(120, 160, 255, 0.55),
+    0 0 30px 8px rgba(60, 100, 220, 0.3),
+    0 6px 20px rgba(0,0,0,0.6);
+}
+.hover-starfield::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 16px;
+  background: radial-gradient(circle at center, rgba(180,210,255,0.18) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.hover-starfield:hover::before {
+  opacity: 1;
+  animation: stardust-burst 0.6s ease-out forwards;
+}
+@keyframes stardust-burst {
+  0%   { transform: scale(0.8); opacity: 0; }
+  40%  { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ── 2. NEBULA PULSE — Nebula Glow Halo ──────────────────────────── */
+.hover-nebula_pulse {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+.hover-nebula_pulse:hover {
+  transform: scale(1.07) translateY(-2px);
+}
+.hover-nebula_pulse::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 18px;
+  opacity: 0;
+  background: transparent;
+  box-shadow:
+    0 0 14px 5px rgba(180, 80, 255, 0.4),
+    0 0 30px 10px rgba(240, 60, 180, 0.25),
+    0 0 50px 18px rgba(100, 30, 180, 0.15);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.hover-nebula_pulse:hover::before {
+  opacity: 1;
+  animation: nebula-pulse-ring 1.5s ease-in-out infinite;
+}
+@keyframes nebula-pulse-ring {
+  0%, 100% { box-shadow: 0 0 14px 5px rgba(180,80,255,0.4), 0 0 30px 10px rgba(240,60,180,0.25), 0 0 50px 18px rgba(100,30,180,0.15); }
+  50%       { box-shadow: 0 0 20px 8px rgba(200,100,255,0.6), 0 0 44px 16px rgba(255,80,200,0.35), 0 0 70px 25px rgba(120,40,220,0.2); }
+}
+
+/* ── 3. BLACK HOLE — Gravity Warp ────────────────────────────────── */
+.hover-black_hole {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+}
+.hover-black_hole:hover {
+  transform: scale(1.1) perspective(300px) rotateY(6deg);
+  box-shadow:
+    0 0 18px 5px rgba(255, 140, 30, 0.45),
+    0 0 36px 12px rgba(200, 60, 0, 0.25),
+    inset 0 0 12px rgba(255, 100, 0, 0.1);
+}
+.hover-black_hole::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 150, 40, 0);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.hover-black_hole:hover::after {
+  opacity: 1;
+  animation: gravity-ring 0.8s ease-out forwards;
+}
+@keyframes gravity-ring {
+  0%   { transform: scale(0.6); opacity: 0.8; border-color: rgba(255,140,30,0.8); }
+  100% { transform: scale(1.7); opacity: 0; border-color: rgba(255,60,0,0); }
+}
+
+/* ── 4. COSMIC DUST — Comet Trail ────────────────────────────────── */
+.hover-cosmic_dust {
+  position: relative;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  overflow: visible;
+}
+.hover-cosmic_dust:hover {
+  transform: scale(1.07) translateX(2px);
+  filter: brightness(1.15) drop-shadow(0 0 8px rgba(100, 220, 255, 0.5));
+}
+.hover-cosmic_dust::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 0;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(to left, rgba(100,210,255,0.8), rgba(80,170,255,0.4), transparent);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  pointer-events: none;
+}
+.hover-cosmic_dust:hover::before {
+  opacity: 1;
+  animation: comet-trail 0.4s ease-out forwards;
+}
+@keyframes comet-trail {
+  0%   { width: 0; opacity: 0.9; }
+  60%  { width: 55px; opacity: 0.7; }
+  100% { width: 70px; opacity: 0; }
+}
+
+/* ── 5. AURORA GALAXY — Aurora Shimmer ───────────────────────────── */
+.hover-aurora_galaxy {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+.hover-aurora_galaxy:hover {
+  transform: scale(1.08) translateY(-2px);
+}
+.hover-aurora_galaxy::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 150, 0.0) 0%,
+    rgba(0, 200, 180, 0.25) 25%,
+    rgba(0, 150, 255, 0.25) 50%,
+    rgba(80, 0, 220, 0.2) 75%,
+    rgba(0, 255, 150, 0.0) 100%
+  );
+  background-size: 300% 300%;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.hover-aurora_galaxy:hover::before {
+  opacity: 1;
+  animation: aurora-shimmer 2s linear infinite;
+}
+@keyframes aurora-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   WALLPAPER TRANSITION
+   ══════════════════════════════════════════════════════════════════════ */
+.wallpaper-fade {
+  animation: wallpaper-in 0.7s ease-out forwards;
+}
+@keyframes wallpaper-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

@@ -1293,7 +1293,7 @@ export default function SkillsApp() {
     return (
         <div style={{
             position: "relative", height: "100%", display: "flex", flexDirection: "column",
-            fontFamily: "'Inter', system-ui, sans-serif", overflow: "hidden", background: "#07060f",
+            fontFamily: "'Inter', system-ui, sans-serif", overflow: "hidden", overflowX: "hidden", background: "#07060f",
         }}>
             <GalaxyBackground accent={cfg.accent} />
 
@@ -1354,13 +1354,13 @@ export default function SkillsApp() {
             </motion.div>
 
             {/* BODY */}
-            <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative", zIndex: 5 }}>
+            <div style={{ flex: 1, display: "flex", overflow: "hidden", overflowX: "hidden", position: "relative", zIndex: 5 }}>
                 <AnimatePresence initial={false}>
                     {sidebarOpen && (
                         <motion.div key="sidebar" initial={{ width: 0, opacity: 0 }} animate={{ width: 196, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
                             transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                            style={{ flexShrink: 0, overflow: "hidden", borderRight: "1px solid rgba(255,255,255,0.05)", background: "rgba(7,6,15,0.72)", backdropFilter: "blur(24px)" }}>
-                            <div style={{ width: 196, height: "100%", overflowY: "auto", padding: "0.8rem 0.6rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                            style={{ flexShrink: 0, overflow: "hidden", overflowX: "hidden", borderRight: "1px solid rgba(255,255,255,0.05)", background: "rgba(7,6,15,0.72)", backdropFilter: "blur(24px)" }}>
+                            <div style={{ width: 196, height: "100%", overflowY: "auto", overflowX: "hidden", padding: "0.8rem 0.6rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                                 <div style={{ fontSize: "0.60rem", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "rgba(255,255,255,0.18)", padding: "0 0.35rem 0.5rem", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: "0.35rem" }}>
                                     Categories
                                 </div>
@@ -1376,7 +1376,7 @@ export default function SkillsApp() {
                     )}
                 </AnimatePresence>
 
-                <div style={{ flex: 1, overflowY: "auto", padding: "1.2rem 1.4rem" }}>
+                <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "1.2rem 1.4rem" }}>
                     <AnimatePresence mode="wait">
                         <motion.div key={current?.category} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
                             <div style={{ marginBottom: "1.2rem" }}>
