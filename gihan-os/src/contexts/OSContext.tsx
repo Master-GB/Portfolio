@@ -54,12 +54,9 @@ const DEFAULT_SETTINGS: OSSettings = {
   // System Settings
   bootAnimation: true,
   autoOpenWelcome: true,
-  windowSnap: true,
   desktopGrid: false,
 
   // Accessibility
-  highContrast: false,
-  reducedParticles: false,
   largerText: false,
 
   // Performance
@@ -148,8 +145,8 @@ export function OSProvider({ children }: { children: ReactNode }) {
         }
 
         const app = getApp(id);
-        const isTabletOrMobile = typeof window !== 'undefined' && window.innerWidth <= 1024;
-        const shouldMaximize = isTabletOrMobile && id === 'projects';
+        const isTabletOrMobile = typeof window !== 'undefined' && window.innerWidth <= 1440;
+        const shouldMaximize = isTabletOrMobile;
 
         const pos = getWindowPosition(
           app.defaultSize.w,
@@ -208,9 +205,10 @@ export function OSProvider({ children }: { children: ReactNode }) {
 
   const restoreWindow = useCallback(
     (id: AppId) => {
+      const isTabletOrMobile = typeof window !== 'undefined' && window.innerWidth <= 1440;
       setWindows((prev) =>
         prev.map((w) =>
-          w.id === id ? { ...w, minimized: false, maximized: false } : w
+          w.id === id ? { ...w, minimized: false, maximized: isTabletOrMobile ? true : w.maximized } : w
         )
       );
       focusWindow(id);

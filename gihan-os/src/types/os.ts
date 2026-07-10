@@ -41,11 +41,9 @@ export interface OSSettings {
   // System Settings
   bootAnimation: boolean;
   autoOpenWelcome: boolean;
-  windowSnap: boolean;
   desktopGrid: boolean;
 
   // Accessibility
-  reducedParticles: boolean;
   largerText: boolean;
 
   // Performance
