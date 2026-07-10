@@ -43,28 +43,36 @@ const DEFAULT_SETTINGS: OSSettings = {
   robotTheme: "cyan",
   robotHologram: true,
   robotLookAtMouse: true,
+
   // Display Settings
   themeMode: "dark",
-  accentColor: "#06b6d4",
+  accentColor: "indigo",
   taskbarPosition: "bottom",
-  taskbarTransparency: 0.8,
+  taskbarOpacity: 70,
   desktopIconSize: "medium",
+
   // System Settings
   bootAnimation: true,
   autoOpenWelcome: true,
   windowSnap: true,
   desktopGrid: false,
+
   // Accessibility
   highContrast: false,
   reducedParticles: false,
   largerText: false,
+
   // Performance
-  disable3DRobot: false,
+  disableRobot: false,
+  reduceAnimations: false,
   lowPowerMode: false,
+
   // Personalization
-  desktopIconLabels: true,
+  showIconLabels: true,
   startMenuLayout: "expanded",
   clockFormat: "12h",
+  clockSeconds: false,
+  showDesktopIcons: true,
 };
 
 function getApp(id: AppId) {
@@ -91,6 +99,28 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const [activeWindowId, setActiveWindowId] = useState<AppId | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [settings, setSettings] = useState<OSSettings>(DEFAULT_SETTINGS);
+  // Load persisted settings from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('gihanOSSettings');
+      if (stored) {
+        const parsed = JSON.parse(stored) as OSSettings;
+        setSettings((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (e) {
+      console.error('Failed to load settings from localStorage', e);
+    }
+  }, []);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    try {
+      const serialized = JSON.stringify(settings);
+      window.localStorage.setItem('gihanOSSettings', serialized);
+    } catch (e) {
+      console.error('Failed to save settings to localStorage', e);
+    }
+  }, [settings]);
   const [topZ, setTopZ] = useState(10);
   const initialWindowShown = useRef(false);
 
@@ -201,15 +231,17 @@ export function OSProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // Open about window on first boot
+  // Open about window on first boot if autoOpenWelcome is enabled
   useEffect(() => {
     if (booted && !initialWindowShown.current) {
       initialWindowShown.current = true;
-      setTimeout(() => {
-        openWindow("about");
-      }, 500);
+      if (settings.autoOpenWelcome) {
+        setTimeout(() => {
+          openWindow("about");
+        }, 500);
+      }
     }
-  }, [booted, openWindow]);
+  }, [booted, openWindow, settings.autoOpenWelcome]);
 
   const value = useMemo(
     () => ({

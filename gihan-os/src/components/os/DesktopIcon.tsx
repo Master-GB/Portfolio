@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 
 import type { AppId } from "@/data/portfolio";
+import { useOS } from "@/contexts/OSContext";
 import { cn } from "@/lib/utils";
 
 const ICON_THEMES: Record<
@@ -63,7 +64,34 @@ interface Props {
 }
 
 export default function DesktopIcon({ id, title, icon: Icon, onClick }: Props) {
+  const { settings } = useOS();
   const theme = ICON_THEMES[id];
+
+  const getIconSizeClasses = () => {
+    switch (settings.desktopIconSize) {
+      case "small":
+        return {
+          btn: "w-[64px] py-1 gap-0.5",
+          container: "h-9 w-9 rounded-[8px]",
+          iconSize: 20
+        };
+      case "large":
+        return {
+          btn: "w-[88px] py-2 gap-1.5",
+          container: "h-16 w-16 rounded-[12px]",
+          iconSize: 34
+        };
+      case "medium":
+      default:
+        return {
+          btn: "w-[76px] py-1.5 gap-1",
+          container: "h-12 w-12 rounded-[10px]",
+          iconSize: 26
+        };
+    }
+  };
+
+  const sizes = getIconSizeClasses();
 
   return (
     <button
@@ -71,36 +99,38 @@ export default function DesktopIcon({ id, title, icon: Icon, onClick }: Props) {
       onClick={onClick}
       onDoubleClick={onClick}
       className={cn(
-        "flex w-[76px] flex-col items-center gap-1 rounded-[3px] px-1 py-1.5",
+        "flex flex-col items-center rounded-[3px] px-1 transition-all",
+        sizes.btn,
         "hover:bg-white/15 active:bg-white/20",
         "focus-visible:outline focus-visible:outline-1 focus-visible:outline-white/50"
       )}
     >
       <div
         className={cn(
-          "relative flex h-12 w-12 items-center justify-center rounded-[10px]",
-          "bg-gradient-to-b",
+          "relative flex items-center justify-center bg-gradient-to-b shadow-lg transition-all",
+          sizes.container,
           theme.gradient,
-          theme.shadow,
-          "shadow-lg"
+          theme.shadow
         )}
       >
         <div className="pointer-events-none absolute inset-x-1 top-1 h-3 rounded-t-md bg-white/25" />
         <Icon
-          size={26}
+          size={sizes.iconSize}
           strokeWidth={1.75}
-          className="relative text-white drop-shadow-sm"
+          className="relative text-white drop-shadow-sm transition-all"
         />
       </div>
 
-      <span
-        className={cn(
-          "w-full text-center text-[11px] font-normal leading-[1.25] text-white",
-          "line-clamp-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.95),0_0_4px_rgba(0,0,0,0.6)]"
-        )}
-      >
-        {title}
-      </span>
+      {settings.showIconLabels && (
+        <span
+          className={cn(
+            "w-full text-center text-[11px] font-normal leading-[1.25] text-white",
+            "line-clamp-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.95),0_0_4px_rgba(0,0,0,0.6)]"
+          )}
+        >
+          {title}
+        </span>
+      )}
     </button>
   );
 }

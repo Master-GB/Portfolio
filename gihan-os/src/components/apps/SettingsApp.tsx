@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { useMemo, useState } from "react";
 
 import { useOS } from "@/contexts/OSContext";
@@ -36,6 +34,45 @@ import {
 
   Layers,
 
+  Sun,
+
+  Moon,
+
+  Zap,
+
+  Eye,
+
+  LayoutGrid as LayoutGridIcon,
+
+  Smartphone,
+
+  Cpu,
+
+  Grid3x3,
+
+  Layout,
+
+  Clock,
+
+  Monitor as MonitorIcon,
+
+  Sliders,
+
+  Accessibility,
+
+  Power,
+
+  Maximize2,
+
+
+  PanelBottom,
+
+  PanelTop,
+
+  PanelLeft,
+
+  PanelRight,
+
 } from "lucide-react";
 
 
@@ -65,8 +102,22 @@ const ROBOT_THEMES = [
 ] as const;
 
 
+const TASKBAR_POSITIONS = [
+  { id: "bottom", icon: PanelBottom, label: "Bottom" },
+  { id: "top", icon: PanelTop, label: "Top" },
+  { id: "left", icon: PanelLeft, label: "Left" },
+  { id: "right", icon: PanelRight, label: "Right" },
+] as const;
 
-type CategoryId = "personalization" | "system" | "robot" | "about";
+const ICON_SIZES = [
+  { id: "small", label: "Small" },
+  { id: "medium", label: "Medium" },
+  { id: "large", label: "Large" },
+] as const;
+
+
+
+type CategoryId = "personalization" | "display" | "system" | "accessibility" | "performance" | "about";
 
 
 
@@ -82,15 +133,14 @@ const CATEGORIES: {
 
 }[] = [
 
-  { id: "personalization", label: "Personalization", icon: Palette, description: "Wallpaper & appearance" },
+    { id: "personalization", label: "Personalization", icon: Palette, description: "Wallpaper & appearance" },
+    { id: "display", label: "Display", icon: MonitorIcon, description: "Theme, colors & layout" },
+    { id: "system", label: "System", icon: Monitor, description: "Sound, motion & behavior" },
+    { id: "accessibility", label: "Accessibility", icon: Accessibility, description: "Visual & cognitive aids" },
+    { id: "performance", label: "Performance", icon: Cpu, description: "Power & resource usage" },
+    { id: "about", label: "About", icon: Info, description: "System information" },
 
-  { id: "system", label: "System", icon: Monitor, description: "Sound, motion & display" },
-
-  { id: "robot", label: "Byte Assistant", icon: Bot, description: "Your 3D companion" },
-
-  { id: "about", label: "About", icon: Info, description: "System information" },
-
-];
+  ];
 
 
 
@@ -116,14 +166,14 @@ export default function SettingsApp() {
 
     );
 
+
+
   }, [query]);
 
 
 
-  const transition = settings.reduceMotion
-
+  const transition = settings.reduceMotion || settings.reduceAnimations
     ? { duration: 0 }
-
     : { duration: 0.22, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] };
 
 
@@ -266,7 +316,7 @@ export default function SettingsApp() {
 
         <div className="border-t border-white/[0.06] px-4 py-3">
 
-          <p className="text-[10px] text-slate-600">v1.0 · Next.js, Three.js &amp; Framer Motion</p>
+          <p className="text-[10px] text-slate-600">v1.0 · Next.js, Three.js &​amp; Framer Motion</p>
 
         </div>
 
@@ -353,54 +403,285 @@ export default function SettingsApp() {
                               {active && (
 
                                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500">
-
                                   <Check size={10} className="text-white" />
-
                                 </span>
-
                               )}
-
                             </div>
-
                           </motion.button>
-
                         );
-
                       })}
-
                     </div>
-
                   </div>
-
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<LayoutGridIcon size={15} />}
+                      label="Show desktop icons"
+                      description="Display app icons on desktop"
+                      control={
+                        <Toggle
+                          checked={settings.showDesktopIcons}
+                          onChange={(v) => updateSetting("showDesktopIcons", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                    <SettingsRow
+                      icon={<Grid3x3 size={15} />}
+                      label="Desktop grid"
+                      description="Align icons in a grid layout"
+                      control={
+                        <Toggle
+                          checked={settings.desktopGrid}
+                          onChange={(v) => updateSetting("desktopGrid", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                  </SettingsCard>
+                  <div>
+                    <SectionLabel>Icon size</SectionLabel>
+                    <div className="flex gap-2">
+                      {ICON_SIZES.map((size) => {
+                        const active = settings.desktopIconSize === size.id;
+                        return (
+                          <button
+                            key={size.id}
+                            onClick={() => updateSetting("desktopIconSize", size.id as any)}
+                            className={cn(
+                              "flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition",
+                              active
+                                ? "border-indigo-400 bg-indigo-400/10 text-indigo-300"
+                                : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            {size.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<Layout size={15} />}
+                      label="Show icon labels"
+                      description="Display text labels under icons"
+                      control={
+                        <Toggle
+                          checked={settings.showIconLabels}
+                          onChange={(v) => updateSetting("showIconLabels", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                  </SettingsCard>
                 </>
-
               )}
 
+              {activeCategory === "display" && (
+                <>
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<Sun size={15} />}
+                      label="Theme mode"
+                      description="Light or dark appearance"
+                      control={
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => updateSetting("themeMode", "light")}
+                            className={cn(
+                              "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                              settings.themeMode === "light"
+                                ? "bg-amber-400 text-amber-950"
+                                : "bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"
+                            )}
+                          >
+                            <Sun size={16} />
+                          </button>
+                          <button
+                            onClick={() => updateSetting("themeMode", "dark")}
+                            className={cn(
+                              "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                              settings.themeMode === "dark"
+                                ? "bg-indigo-400 text-indigo-950"
+                                : "bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"
+                            )}
+                          >
+                            <Moon size={16} />
+                          </button>
+                        </div>
+                      }
+                    />
+                  </SettingsCard>
 
+                  <div>
+                    <SectionLabel>Taskbar position</SectionLabel>
+                    <div className="grid grid-cols-4 gap-2">
+                      {TASKBAR_POSITIONS.map((pos) => {
+                        const Icon = pos.icon;
+                        const active = settings.taskbarPosition === pos.id;
+                        return (
+                          <button
+                            key={pos.id}
+                            onClick={() => updateSetting("taskbarPosition", pos.id as any)}
+                            className={cn(
+                              "flex flex-col items-center gap-1 rounded-lg border px-2 py-3 transition",
+                              active
+                                ? "border-indigo-400 bg-indigo-400/10 text-indigo-300"
+                                : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            <Icon size={18} />
+                            <span className="text-[10px]">{pos.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <SectionLabel>Taskbar opacity</SectionLabel>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">Transparent</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={settings.taskbarOpacity}
+                        onChange={(e) => updateSetting("taskbarOpacity", parseInt(e.target.value))}
+                        className="flex-1 h-2 appearance-none rounded-full bg-slate-700 accent-indigo-400"
+                      />
+                      <span className="text-xs text-slate-500">Opaque</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {activeCategory === "system" && (
-
-                <div>
-
+                <>
                   <SectionLabel>Preferences</SectionLabel>
-
                   <SettingsCard>
-
                     <SettingsRow
-
                       icon={<Bot size={15} />}
-
                       label="Show 3D Robot (Byte)"
-
                       description="Display your companion on the desktop"
+                      control={
+                        <Toggle
+                          checked={settings.showRobot}
+                          onChange={(v) => updateSetting("showRobot", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                    <SettingsRow
+                      icon={<LayoutGridIcon size={15} />}
+                      label="Auto-open welcome"
+                      description="Show welcome window on boot"
+                      control={
+                        <Toggle
+                          checked={settings.autoOpenWelcome}
+                          onChange={(v) => updateSetting("autoOpenWelcome", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                    <SettingsRow
+                      icon={<Maximize2 size={15} />}
+                      label="Window snap"
+                      description="Snap windows to edges"
+                      control={
+                        <Toggle
+                          checked={settings.windowSnap}
+                          onChange={(v) => updateSetting("windowSnap", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                  </SettingsCard>
+                  <SectionLabel>Clock</SectionLabel>
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<Clock size={15} />}
+                      label="Clock format"
+                      description="12-hour or 24-hour format"
+                      control={
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => updateSetting("clockFormat", "12h")}
+                            className={cn(
+                              "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition",
+                              settings.clockFormat === "12h"
+                                ? "border-indigo-400 bg-indigo-400/10 text-indigo-300"
+                                : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            12h
+                          </button>
+                          <button
+                            onClick={() => updateSetting("clockFormat", "24h")}
+                            className={cn(
+                              "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition",
+                              settings.clockFormat === "24h"
+                                ? "border-indigo-400 bg-indigo-400/10 text-indigo-300"
+                                : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.04]"
+                            )}
+                          >
+                            24h
+                          </button>
+                        </div>
+                      }
+                    />
+                    <SettingsRow
+                      icon={<Clock size={15} />}
+                      label="Show seconds"
+                      description="Display seconds in clock"
+                      control={
+                        <Toggle
+                          checked={settings.clockSeconds}
+                          onChange={(v) => updateSetting("clockSeconds", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                  </SettingsCard>
+                </>
+              )}
+
+              {activeCategory === "accessibility" && (
+                <>
+                  <SectionLabel>Visual</SectionLabel>
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<Accessibility size={15} />}
+                      label="Larger text"
+                      description="Increase base font size"
+                      control={
+                        <Toggle
+                          checked={settings.largerText}
+                          onChange={(v) => updateSetting("largerText", v)}
+                          reduceMotion={settings.reduceMotion}
+                        />
+                      }
+                    />
+                  </SettingsCard>
+
+                </>
+              )}
+
+              {activeCategory === "performance" && (
+                <>
+                  <SectionLabel>Power</SectionLabel>
+                  <SettingsCard>
+                    <SettingsRow
+                      icon={<Power size={15} />}
+                      label="Low power mode"
+                      description="Reduce resource usage"
 
                       control={
 
                         <Toggle
 
-                          checked={settings.showRobot}
+                          checked={settings.lowPowerMode}
 
-                          onChange={(v) => updateSetting("showRobot", v)}
+                          onChange={(v) => updateSetting("lowPowerMode", v)}
 
                           reduceMotion={settings.reduceMotion}
 
@@ -410,21 +691,27 @@ export default function SettingsApp() {
 
                     />
 
+                  </SettingsCard>
+
+                  <SectionLabel>Performance</SectionLabel>
+
+                  <SettingsCard>
+
                     <SettingsRow
 
-                      icon={<Volume2 size={15} />}
+                      icon={<Cpu size={15} />}
 
-                      label="Sound effects"
+                      label="Disable 3D Robot"
 
-                      description="Play sounds for system interactions"
+                      description="Completely disable robot rendering"
 
                       control={
 
                         <Toggle
 
-                          checked={settings.soundEnabled}
+                          checked={settings.disableRobot}
 
-                          onChange={(v) => updateSetting("soundEnabled", v)}
+                          onChange={(v) => updateSetting("disableRobot", v)}
 
                           reduceMotion={settings.reduceMotion}
 
@@ -438,17 +725,17 @@ export default function SettingsApp() {
 
                       icon={<Sparkles size={15} />}
 
-                      label="Reduce motion"
+                      label="Reduce animations"
 
-                      description="Limit animations across the OS"
+                      description="More aggressive animation reduction"
 
                       control={
 
                         <Toggle
 
-                          checked={settings.reduceMotion}
+                          checked={settings.reduceAnimations}
 
-                          onChange={(v) => updateSetting("reduceMotion", v)}
+                          onChange={(v) => updateSetting("reduceAnimations", v)}
 
                           reduceMotion={settings.reduceMotion}
 
@@ -460,154 +747,9 @@ export default function SettingsApp() {
 
                   </SettingsCard>
 
-                </div>
-
-              )}
-
-
-
-              {activeCategory === "robot" && (
-
-                <>
-
-                  {!settings.showRobot && (
-
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3">
-
-                      <div>
-
-                        <p className="text-sm font-medium text-amber-200">Byte is turned off</p>
-
-                        <p className="text-xs text-amber-200/60">
-
-                          Turn on the robot to preview changes on the desktop.
-
-                        </p>
-
-                      </div>
-
-                      <button
-
-                        onClick={() => updateSetting("showRobot", true)}
-
-                        className="shrink-0 cursor-pointer rounded-lg bg-amber-400/20 px-3 py-1.5 text-xs font-medium text-amber-200 transition hover:bg-amber-400/30"
-
-                      >
-
-                        Turn on
-
-                      </button>
-
-                    </div>
-
-                  )}
-
-
-
-                  <div className={cn(!settings.showRobot && "pointer-events-none opacity-40")}>
-
-                    <SectionLabel>Glow theme</SectionLabel>
-
-                    <div className="mb-6 flex gap-2.5">
-
-                      {ROBOT_THEMES.map((t) => {
-
-                        const active = settings.robotTheme === t.id;
-
-                        return (
-
-                          <button
-
-                            key={t.id}
-
-                            title={t.id}
-
-                            onClick={() => updateSetting("robotTheme", t.id)}
-
-                            className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition hover:scale-105"
-
-                            style={{ backgroundColor: t.hex }}
-
-                          >
-
-                            {active && (
-
-                              <span className="absolute inset-0 rounded-full ring-2 ring-white ring-offset-2 ring-offset-[#0c0d12]" />
-
-                            )}
-
-                            {active && <Check size={13} className="text-white drop-shadow" />}
-
-                          </button>
-
-                        );
-
-                      })}
-
-                    </div>
-
-
-
-                    <SectionLabel>Behavior</SectionLabel>
-
-                    <SettingsCard>
-
-                      <SettingsRow
-
-                        icon={<Layers size={15} />}
-
-                        label="Holo platform"
-
-                        description="Show a holographic base beneath Byte"
-
-                        control={
-
-                          <Toggle
-
-                            checked={settings.robotHologram}
-
-                            onChange={(v) => updateSetting("robotHologram", v)}
-
-                            reduceMotion={settings.reduceMotion}
-
-                          />
-
-                        }
-
-                      />
-
-                      <SettingsRow
-
-                        icon={<MousePointer2 size={15} />}
-
-                        label="Track mouse"
-
-                        description="Byte's eyes follow your cursor"
-
-                        control={
-
-                          <Toggle
-
-                            checked={settings.robotLookAtMouse}
-
-                            onChange={(v) => updateSetting("robotLookAtMouse", v)}
-
-                            reduceMotion={settings.reduceMotion}
-
-                          />
-
-                        }
-
-                      />
-
-                    </SettingsCard>
-
-                  </div>
-
                 </>
 
               )}
-
 
 
               {activeCategory === "about" && (
