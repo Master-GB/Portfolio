@@ -16,6 +16,13 @@
   --font-mono: "Cascadia Code", "Fira Code", ui-monospace, monospace;
 }
 
+:root.accent-indigo { --accent: #6366f1; --accent-glow: #818cf8; }
+:root.accent-rose { --accent: #f43f5e; --accent-glow: #fb7185; }
+:root.accent-emerald { --accent: #10b981; --accent-glow: #34d399; }
+:root.accent-amber { --accent: #f59e0b; --accent-glow: #fbbf24; }
+:root.accent-cyan { --accent: #06b6d4; --accent-glow: #22d3ee; }
+
+
 * {
   box-sizing: border-box;
 }
@@ -113,3 +120,84 @@ body {
     border-radius: 0 !important;
   }
 }
+
+/* Light Mode Overrides */
+.light-mode {
+  --bg: #f1f5f9;
+  --fg: #0f172a;
+  --muted: #475569;
+  --panel-bg: rgba(241, 245, 249, 0.85);
+  --panel-border: #cbd5e1;
+  --window-bg: #e2e8f0;
+}
+.light-mode .os-panel {
+  background: rgba(241, 245, 249, 0.85) !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.light-mode .os-window {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.light-mode .os-window .os-panel {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+.light-mode .window-drag-handle {
+  background: #cbd5e1 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+.light-mode .window-drag-handle span,
+.light-mode .window-drag-handle button {
+  color: #0f172a !important;
+}
+.light-mode input, .light-mode textarea {
+  color: #0f172a !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+.light-mode aside {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+.light-mode aside h1, .light-mode aside p, .light-mode aside span {
+  color: #0f172a !important;
+}
+.light-mode aside button {
+  color: #334155 !important;
+}
+.light-mode aside button:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --bg: #000000 !important;
+  --fg: #ffffff !important;
+  --muted: #ffffff !important;
+  --panel-bg: #000000 !important;
+  --panel-border: #ffffff !important;
+  --window-bg: #000000 !important;
+  --accent: #ffff00 !important;
+  --accent-glow: #ffff00 !important;
+}
+.high-contrast * {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
+.high-contrast button, .high-contrast a {
+  border: 2px solid #ffffff !important;
+}
+
+/* Larger Text Mode */
+.larger-text {
+  font-size: 115% !important;
+}
+

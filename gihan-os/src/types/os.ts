@@ -30,26 +30,34 @@ export interface OSSettings {
   robotTheme: "cyan" | "rose" | "emerald" | "gold" | "cyberpunk";
   robotHologram: boolean;
   robotLookAtMouse: boolean;
+
   // Display Settings
   themeMode: "dark" | "light";
-  accentColor: string;
+  accentColor: "indigo" | "rose" | "emerald" | "amber" | "cyan";
   taskbarPosition: "bottom" | "top" | "left" | "right";
-  taskbarTransparency: number;
+  taskbarOpacity: number;
   desktopIconSize: "small" | "medium" | "large";
+
   // System Settings
   bootAnimation: boolean;
   autoOpenWelcome: boolean;
   windowSnap: boolean;
   desktopGrid: boolean;
+
   // Accessibility
-  highContrast: boolean;
   reducedParticles: boolean;
   largerText: boolean;
+
   // Performance
-  disable3DRobot: boolean;
+  disableRobot: boolean;
+  reduceAnimations: boolean;
   lowPowerMode: boolean;
+
   // Personalization
-  desktopIconLabels: boolean;
+  showIconLabels: boolean;
   startMenuLayout: "compact" | "expanded";
   clockFormat: "12h" | "24h";
+  clockSeconds: boolean;
+  showDesktopIcons: boolean;
 }
+

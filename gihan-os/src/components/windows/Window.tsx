@@ -105,111 +105,104 @@ export default function Window({ window: win, children }: Props) {
 
 
         dragState.current.rafId = requestAnimationFrame(() => {
-
           if (!dragState.current || !windowRef.current) return;
-
           const dx = ev.clientX - dragState.current.startX;
-
           const dy = ev.clientY - dragState.current.startY;
 
+          const isTaskbarTop = settings.taskbarPosition === "top";
+          const isTaskbarLeft = settings.taskbarPosition === "left";
+          const isTaskbarRight = settings.taskbarPosition === "right";
 
+          const minX = isTaskbarLeft ? TASKBAR_H : 0;
+          const maxX = isTaskbarRight
+            ? window.innerWidth - TASKBAR_H - win.width
+            : window.innerWidth - win.width;
 
-          const maxX = window.innerWidth - win.width;
+          const minY = isTaskbarTop ? TASKBAR_H : 0;
+          const maxY = settings.taskbarPosition === "bottom" || !settings.taskbarPosition
+            ? window.innerHeight - TASKBAR_H - win.height
+            : window.innerHeight - win.height;
 
-          const maxY = window.innerHeight - TASKBAR_H - win.height;
+          let newX = dragState.current.originX + dx;
+          let newY = dragState.current.originY + dy;
 
+          if (settings.windowSnap) {
+            const snapThreshold = 20;
+            if (Math.abs(newX - minX) < snapThreshold) {
+              newX = minX;
+            }
+            if (Math.abs(newX - maxX) < snapThreshold) {
+              newX = maxX;
+            }
+            if (Math.abs(newY - minY) < snapThreshold) {
+              newY = minY;
+            }
+            if (Math.abs(newY - maxY) < snapThreshold) {
+              newY = maxY;
+            }
+          }
 
-
-          const newX = Math.max(0, Math.min(maxX, dragState.current.originX + dx));
-
-          const newY = Math.max(0, Math.min(maxY, dragState.current.originY + dy));
-
-
+          newX = Math.max(minX, Math.min(maxX, newX));
+          newY = Math.max(minY, Math.min(maxY, newY));
 
           // Use direct DOM manipulation for smoother dragging
-
           windowRef.current.style.left = `${newX}px`;
-
           windowRef.current.style.top = `${newY}px`;
 
-
-
           // Update state less frequently
-
           moveWindow(win.id, newX, newY);
-
         });
-
       };
-
-
 
       const onUp = () => {
-
         if (dragState.current && dragState.current.rafId !== null) {
-
           cancelAnimationFrame(dragState.current.rafId);
-
         }
-
         dragState.current = null;
-
         document.removeEventListener("pointermove", onMove);
-
         document.removeEventListener("pointerup", onUp);
-
       };
 
-
-
       document.addEventListener("pointermove", onMove);
-
       document.addEventListener("pointerup", onUp);
-
     },
-
-    [win.maximized, win.x, win.y, win.width, win.height, win.id, focusWindow, moveWindow]
-
+    [win.maximized, win.x, win.y, win.width, win.height, win.id, focusWindow, moveWindow, settings.taskbarPosition, settings.windowSnap]
   );
 
-
-
   const isMaximized = win.maximized;
+  const isTaskbarLeft = settings.taskbarPosition === "left";
+  const isTaskbarRight = settings.taskbarPosition === "right";
+  const isTaskbarTop = settings.taskbarPosition === "top";
 
-
+  const maximizedLeft = isMaximized ? (isTaskbarLeft ? TASKBAR_H : 0) : win.x;
+  const maximizedTop = isMaximized ? (isTaskbarTop ? TASKBAR_H : 0) : win.y;
+  const maximizedWidth = isMaximized
+    ? isTaskbarLeft || isTaskbarRight
+      ? `calc(100vw - ${TASKBAR_H}px)`
+      : "100vw"
+    : win.width;
+  const maximizedHeight = isMaximized
+    ? isTaskbarLeft || isTaskbarRight
+      ? "100vh"
+      : `calc(100vh - ${TASKBAR_H}px)`
+    : win.height;
 
   return (
-
     <motion.div
-
       ref={windowRef}
-
       initial={settings.reduceMotion ? false : { opacity: 0 }}
-
       animate={{ opacity: 1 }}
-
       exit={{ opacity: 0 }}
-
       transition={{ duration: 0.2 }}
-
       onMouseDown={() => focusWindow(win.id)}
-
       className={cn("os-window fixed flex flex-col overflow-hidden shadow-2xl shadow-black/50 bg-black", "rounded-none")}
-
       style={{
-
-        left: isMaximized ? 0 : win.x,
-
-        top: isMaximized ? 0 : win.y,
-
-        width: isMaximized ? "100vw" : win.width,
-
-        height: isMaximized ? `calc(100vh - ${TASKBAR_H}px)` : win.height,
-
+        left: maximizedLeft,
+        top: maximizedTop,
+        width: maximizedWidth,
+        height: maximizedHeight,
         zIndex: win.zIndex,
-
       }}
-
     >
 
       <div className="os-panel flex h-full flex-col">
