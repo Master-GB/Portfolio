@@ -41,7 +41,6 @@ const DEFAULT_SETTINGS: OSSettings = {
   soundEnabled: false,
   robotAvatar: "robot",
   robotTheme: "cyan",
-  robotHologram: true,
   robotLookAtMouse: true,
 
   // Display Settings

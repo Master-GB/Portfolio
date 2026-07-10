@@ -30,7 +30,7 @@ mobile apps, and AI/ML technologies. I love turning complex problems into clean,
 and I'm actively seeking internship opportunities to grow with innovative teams.`,
   socials: [
     { label: "GitHub", url: "https://github.com/Master-GB", handle: "@Master-GB" },
-    { label: "LinkedIn", url: "https://linkedin.com/in/yourprofile", handle: "yourprofile" },
+    { label: "LinkedIn", url: "https://www.linkedin.com/in/gihan-bandara", handle: "gihan-bandara" },
     { label: "Email", url: "mailto:gihanbandara365@gmail.com", handle: "gihanbandara365@gmail.com" },
   ],
   highlights: [

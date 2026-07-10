@@ -28,7 +28,6 @@ export interface OSSettings {
   soundEnabled: boolean;
   robotAvatar: "robot";
   robotTheme: "cyan" | "rose" | "emerald" | "gold" | "cyberpunk";
-  robotHologram: boolean;
   robotLookAtMouse: boolean;
 
   // Display Settings
