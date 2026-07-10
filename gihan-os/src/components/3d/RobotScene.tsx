@@ -109,8 +109,10 @@ function RobotModel({
   });
 
   // Calculate dynamic scaling and positions based on model characteristics
-  const scale = 0.20;
-  const positionY = -0.9;
+  // Increased scale to make the robot model larger (not the container)
+  const scale = 0.26;
+  // Slightly adjust vertical position to keep model visually grounded
+  const positionY = -0.82;
 
   return (
     <primitive
@@ -122,66 +124,12 @@ function RobotModel({
   );
 }
 
-function HologramRing({ themeColor }: { themeColor: string }) {
-  const ringRef1 = useRef<THREE.Mesh>(null);
-  const ringRef2 = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    const elapsed = state.clock.getElapsedTime();
-    if (ringRef1.current) {
-      ringRef1.current.rotation.z = elapsed * 0.4;
-    }
-    if (ringRef2.current) {
-      ringRef2.current.rotation.z = -elapsed * 0.25;
-    }
-  });
-
-  return (
-    <group position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      {/* Outer rotating dashed ring */}
-      <mesh ref={ringRef1}>
-        <ringGeometry args={[0.5, 0.68, 32]} />
-        <meshBasicMaterial
-          color={themeColor}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.3}
-          wireframe
-        />
-      </mesh>
-      {/* Inner counter-rotating grid ring */}
-      <mesh ref={ringRef2}>
-        <ringGeometry args={[0.5, 0.65, 8]} />
-        <meshBasicMaterial
-          color={themeColor}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.45}
-          wireframe
-        />
-      </mesh>
-      {/* Core glowing grid disk */}
-      <mesh>
-        <circleGeometry args={[0.35, 6]} />
-        <meshBasicMaterial
-          color={themeColor}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.12}
-          wireframe
-        />
-      </mesh>
-    </group>
-  );
-}
-
 // Preload models for responsive switching
 useGLTF.preload(AVATAR_MODELS.robot);
 
 interface RobotSceneProps {
   avatar?: "robot";
   theme?: "cyan" | "rose" | "emerald" | "gold" | "cyberpunk";
-  hologram?: boolean;
   lookAtMouse?: boolean;
   activeAnimation?: string;
   onAnimationsLoaded?: (names: string[]) => void;
@@ -191,7 +139,6 @@ interface RobotSceneProps {
 export default function RobotScene({
   avatar,
   theme,
-  hologram,
   lookAtMouse,
   activeAnimation,
   onAnimationsLoaded,
@@ -202,7 +149,6 @@ export default function RobotScene({
   // Fallback to settings if props are not explicitly provided
   const activeAvatar = avatar ?? settings.robotAvatar ?? "robot";
   const activeTheme = theme ?? settings.robotTheme ?? "cyan";
-  const showHologram = hologram ?? settings.robotHologram ?? true;
   const isLookAtMouse = lookAtMouse ?? settings.robotLookAtMouse ?? true;
 
   const currentThemeColor = THEME_COLORS[activeTheme] || THEME_COLORS.cyan;
@@ -248,9 +194,6 @@ export default function RobotScene({
         lookAtMouse={isLookAtMouse}
         onAnimationsLoaded={onAnimationsLoaded}
       />
-
-      {/* Holographic Ring under feet */}
-      {showHologram && <HologramRing themeColor={currentThemeColor.str} />}
 
       {interactive && (
         <OrbitControls

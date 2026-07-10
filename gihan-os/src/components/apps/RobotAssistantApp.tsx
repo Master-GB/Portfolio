@@ -6,6 +6,8 @@ import type { WallpaperId } from "@/types/os";
 
 import { THEME_COLORS } from "@/lib/theme";
 import { sound } from "@/lib/sound";
+import RobotScene from "@/components/3d/RobotScene";
+import { motion } from "framer-motion";
 
 import { profile, projects, skills } from "@/data/portfolio";
 import type { AppId } from "@/data/portfolio";
@@ -319,9 +321,19 @@ export default function RobotAssistantApp() {
           {/* Hologram badge */}
           <div className="absolute left-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-900/80 px-2.5 py-1 text-[10px] font-mono tracking-widest text-cyan-400 border border-cyan-500/30 backdrop-blur-md">
             <span className="h-1.5 w-1.5 animate-ping rounded-full bg-cyan-400" />
-            HOLOGRAM ACTIVE
+            ROBOT ACTIVE
           </div>
 
+          <motion.div
+            initial={{ opacity: 0, scale: 1 }}
+            animate={{ opacity: 1, scale: 2 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="w-[120px] h-[120px]">
+              <RobotScene interactive={true} />
+            </div>
+          </motion.div>
 
         </div>
 
@@ -337,7 +349,6 @@ export default function RobotAssistantApp() {
                 playSound("click");
                 updateSetting("robotAvatar", "robot");
                 updateSetting("robotTheme", "cyan");
-                updateSetting("robotHologram", true);
                 updateSetting("robotLookAtMouse", true);
                 playSound("success");
               }}
@@ -401,19 +412,6 @@ export default function RobotAssistantApp() {
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={settings.robotHologram}
-                onChange={(e) => {
-                  playSound("click");
-                  updateSetting("robotHologram", e.target.checked);
-                }}
-                className="rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5"
-              />
-              <span className="text-[11px] text-slate-400">Holo Platform</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
                 checked={settings.robotLookAtMouse}
                 onChange={(e) => {
                   playSound("click");
@@ -471,8 +469,8 @@ export default function RobotAssistantApp() {
                 {/* Avatar icon */}
                 <div
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] border ${isBot
-                      ? "bg-slate-900 border-slate-800 text-cyan-400"
-                      : "bg-indigo-950 border-indigo-800/60 text-indigo-300"
+                    ? "bg-slate-900 border-slate-800 text-cyan-400"
+                    : "bg-indigo-950 border-indigo-800/60 text-indigo-300"
                     }`}
                 >
                   {isBot ? "🤖" : "👤"}
@@ -481,10 +479,10 @@ export default function RobotAssistantApp() {
                 {/* Bubble */}
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${isBot
-                      ? msg.isDiagnostic
-                        ? "bg-slate-900/90 border border-emerald-500/20 text-emerald-400 font-mono"
-                        : "bg-slate-900/50 border border-slate-800/80 text-slate-200"
-                      : "bg-indigo-600/80 text-white rounded-tr-none"
+                    ? msg.isDiagnostic
+                      ? "bg-slate-900/90 border border-emerald-500/20 text-emerald-400 font-mono"
+                      : "bg-slate-900/50 border border-slate-800/80 text-slate-200"
+                    : "bg-indigo-600/80 text-white rounded-tr-none"
                     }`}
                   style={{
                     whiteSpace: "pre-line",
@@ -556,6 +554,9 @@ export default function RobotAssistantApp() {
             </button>
           </div>
         </div>
+
+        {/* Robot Visualizer */}
+
 
         {/* Input Bar */}
         <form

@@ -60,7 +60,7 @@ const DESKTOP_TIPS = [
 
 
 export default function Desktop() {
-  const { booted, settings, openWindow, setStartMenuOpen } = useOS();
+  const { booted, settings, openWindow, setStartMenuOpen, windows } = useOS();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
   const robotRef = useRef<HTMLDivElement>(null);
@@ -121,16 +121,18 @@ export default function Desktop() {
     return () => cancelAnimationFrame(animationId);
   }, [showRobotActive, settings.taskbarPosition]);
 
-  // Cycle tips every 12 seconds
+  const robotOpen = windows.some((w) => w.id === "robot_assistant");
+
+  // Cycle tips every 12 seconds (only when robot is visible and assistant isn't open)
   useEffect(() => {
-    if (!showRobotActive) return;
+    if (!showRobotActive || robotOpen) return;
 
     const interval = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % DESKTOP_TIPS.length);
     }, 12000);
 
     return () => clearInterval(interval);
-  }, [showRobotActive]);
+  }, [showRobotActive, robotOpen]);
 
   if (!booted) return null;
 
@@ -221,11 +223,11 @@ export default function Desktop() {
         <WindowManager />
       </div>
 
-      {/* 3D Robot – rendered as a top-level fixed overlay */}
-      {showRobotActive && (
+      {/* 3D Robot – rendered as a top-level fixed overlay (hidden while assistant open) */}
+      {showRobotActive && !robotOpen && (
         <div
           ref={robotRef}
-          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[260px] w-[240px] md:right-2 md:h-[340px] md:w-[300px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
+          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[200px] w-[240px] md:right-0 md:h-[220px] md:w-[200px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
           onMouseEnter={() => {
             if (settings.soundEnabled) sound.play("beep");
           }}
@@ -236,22 +238,24 @@ export default function Desktop() {
           }}
           onWheel={(e) => e.stopPropagation()}
         >
-          {/* Cycling Glassmorphic Tip Bubble */}
-          <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={tipIndex}
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.35 }}
-                className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
-              >
-                {DESKTOP_TIPS[tipIndex]}
-                <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
-              </motion.div>
-            </AnimatePresence>
-          </div>
+              {/* Cycling Glassmorphic Tip Bubble (hidden when assistant window is open) */}
+              {!robotOpen && (
+                <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={tipIndex}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.35 }}
+                      className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
+                    >
+                      {DESKTOP_TIPS[tipIndex]}
+                      <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              )}
 
           {/* 3D Canvas rendering */}
           <motion.div
@@ -259,6 +263,7 @@ export default function Desktop() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             className="h-[210px] w-full md:h-[280px] cursor-pointer relative"
+            key={robotOpen ? "robot-closed" : "robot-open"}
           >
             {/* Visual pulse glow on hover */}
             <div className="absolute inset-0 rounded-full bg-indigo-500/5 opacity-0 group-hover:opacity-100 blur-2xl transition duration-500 pointer-events-none" />

@@ -60,15 +60,16 @@ export default function Taskbar() {
   const taskbarBg = `rgba(15, 23, 42, ${settings.taskbarOpacity / 100})`;
 
   return (
-    <div
-      className={cn(
-        "os-panel flex gap-2 border-slate-700 transition-all z-50",
-        isVertical ? "flex-col h-full w-full py-3 items-center" : "h-[var(--taskbar-h)] items-center px-3",
-        borderClass
-      )}
-      style={{ backgroundColor: taskbarBg }}
-    >
-      <button
+    <>
+      <div
+        className={cn(
+          "os-panel flex gap-2 border-slate-700 transition-all z-50",
+          isVertical ? "flex-col h-full w-full py-3 items-center" : "h-[var(--taskbar-h)] items-center px-3",
+          borderClass
+        )}
+        style={{ backgroundColor: taskbarBg }}
+      >
+        <button
         onClick={(e) => {
           e.stopPropagation();
           setStartMenuOpen(!startMenuOpen);
@@ -131,5 +132,6 @@ export default function Taskbar() {
         <Clock />
       </div>
     </div>
+  </>
   );
 }
