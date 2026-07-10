@@ -2,7 +2,7 @@
 
 
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { motion } from "framer-motion";
 
@@ -169,6 +169,18 @@ export default function Window({ window: win, children }: Props) {
     [win.maximized, win.x, win.y, win.width, win.height, win.id, focusWindow, moveWindow, settings.taskbarPosition, settings.windowSnap]
   );
 
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
+
+  useEffect(() => {
+    const updateWidth = () => setViewportWidth(window.innerWidth);
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  const isCompactScreen = viewportWidth <= 1440;
   const isMaximized = win.maximized;
   const isTaskbarLeft = settings.taskbarPosition === "left";
   const isTaskbarRight = settings.taskbarPosition === "right";
@@ -233,11 +245,13 @@ export default function Window({ window: win, children }: Props) {
 
             </WinBtn>
 
-            <WinBtn onClick={() => maximizeWindow(win.id)} label="Maximize">
+            {!isCompactScreen && (
+              <WinBtn onClick={() => maximizeWindow(win.id)} label="Maximize">
 
-              <Square size={13} />
+                <Square size={13} />
 
-            </WinBtn>
+              </WinBtn>
+            )}
 
             <WinBtn onClick={() => closeWindow(win.id)} label="Close" danger>
 

@@ -153,7 +153,6 @@ export default function SettingsApp() {
   const [query, setQuery] = useState("");
 
 
-
   const filteredCategories = useMemo(() => {
 
     if (!query.trim()) return CATEGORIES;
@@ -167,15 +166,12 @@ export default function SettingsApp() {
     );
 
 
-
   }, [query]);
-
 
 
   const transition = settings.reduceMotion || settings.reduceAnimations
     ? { duration: 0 }
     : { duration: 0.22, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] };
-
 
 
   const activeMeta = CATEGORIES.find((c) => c.id === activeCategory)!;
@@ -184,11 +180,11 @@ export default function SettingsApp() {
 
   return (
 
-    <div className="flex h-full w-full overflow-hidden  bg-[#0c0d12] text-slate-200">
+    <div className="flex h-full w-full overflow-hidden bg-[#0c0d12] text-slate-200 flex-col md:flex-row">
 
       {/* Sidebar */}
 
-      <aside className="flex w-[224px] shrink-0 flex-col border-r border-white/[0.06] bg-white/[0.02] backdrop-blur-xl">
+      <aside className="flex w-full md:w-[224px] shrink-0 flex-col border-b border-white/[0.06] md:border-b-0 md:border-r bg-white/[0.02] backdrop-blur-xl">
 
         <div className="flex items-center gap-2.5 px-4 pt-5 pb-4">
 
@@ -326,7 +322,7 @@ export default function SettingsApp() {
 
       {/* Content */}
 
-      <main className="flex-1 overflow-y-auto px-8 py-6">
+      <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
 
         <div className="mx-auto max-w-2xl">
 
@@ -366,7 +362,7 @@ export default function SettingsApp() {
 
                     <SectionLabel>Choose your background</SectionLabel>
 
-                    <div className="grid grid-cols-3 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
 
                       {WALLPAPER_OPTIONS.map((wp) => {
 
@@ -440,7 +436,7 @@ export default function SettingsApp() {
                   </SettingsCard>
                   <div>
                     <SectionLabel>Icon size</SectionLabel>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col sm:flex-row">
                       {ICON_SIZES.map((size) => {
                         const active = settings.desktopIconSize === size.id;
                         return (
@@ -515,7 +511,7 @@ export default function SettingsApp() {
 
                   <div>
                     <SectionLabel>Taskbar position</SectionLabel>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {TASKBAR_POSITIONS.map((pos) => {
                         const Icon = pos.icon;
                         const active = settings.taskbarPosition === pos.id;
@@ -539,7 +535,7 @@ export default function SettingsApp() {
                   </div>
                   <div>
                     <SectionLabel>Taskbar opacity</SectionLabel>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
                       <span className="text-xs text-slate-500">Transparent</span>
                       <input
                         type="range"
@@ -547,7 +543,7 @@ export default function SettingsApp() {
                         max="100"
                         value={settings.taskbarOpacity}
                         onChange={(e) => updateSetting("taskbarOpacity", parseInt(e.target.value))}
-                        className="flex-1 h-2 appearance-none rounded-full bg-slate-700 accent-indigo-400"
+                        className="w-full sm:flex-1 h-2 appearance-none rounded-full bg-slate-700 accent-indigo-400"
                       />
                       <span className="text-xs text-slate-500">Opaque</span>
                     </div>
@@ -579,18 +575,6 @@ export default function SettingsApp() {
                         <Toggle
                           checked={settings.autoOpenWelcome}
                           onChange={(v) => updateSetting("autoOpenWelcome", v)}
-                          reduceMotion={settings.reduceMotion}
-                        />
-                      }
-                    />
-                    <SettingsRow
-                      icon={<Maximize2 size={15} />}
-                      label="Window snap"
-                      description="Snap windows to edges"
-                      control={
-                        <Toggle
-                          checked={settings.windowSnap}
-                          onChange={(v) => updateSetting("windowSnap", v)}
                           reduceMotion={settings.reduceMotion}
                         />
                       }
