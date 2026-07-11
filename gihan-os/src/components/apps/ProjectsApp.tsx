@@ -724,13 +724,13 @@ const PROJECTS: Project[] = [
 
     id: "p2",
 
-    title: "SmartHelth",
+    title: "SmartHealth",
 
-    titleMain:"SmartHelth-AI-Enabled Smart Healthcare Appointment & Telemedicine Platform",
+    titleMain:"SmartHealth-AI-Enabled Smart Healthcare Appointment & Telemedicine Platform",
 
-    description: "SmartHelth is a cloud-native AI-enabled healthcare appointment and telemedicine platform built using Microservices Architecture. The system allows patients to book doctor appointments, attend video consultations, upload medical reports, receive digital prescriptions, and access AI-powered symptom analysis. Built with Spring Boot, Next.js, Tailwind CSS, Docker, and Kubernetes.",
+    description: "SmartHealth is a cloud-native AI-enabled healthcare appointment and telemedicine platform built using Microservices Architecture. The system allows patients to book doctor appointments, attend video consultations, upload medical reports, receive digital prescriptions, and access AI-powered symptom analysis. Built with Spring Boot, Next.js, Tailwind CSS, Docker, and Kubernetes.",
 
-    longDescription: "SmartHelth is a modern cloud-native healthcare platform inspired by real-world telemedicine systems such as Channeling.lk and oDoc. The platform was developed using Microservices Architecture to provide scalable, secure, and high-performance healthcare services for patients, doctors, and administrators.The system enables users to schedule medical appointments, attend online video consultations, upload medical records, receive digital prescriptions, and obtain AI-powered preliminary health suggestions.",
+    longDescription: "SmartHealth is a modern cloud-native healthcare platform inspired by real-world telemedicine systems such as Channeling.lk and oDoc. The platform was developed using Microservices Architecture to provide scalable, secure, and high-performance healthcare services for patients, doctors, and administrators.The system enables users to schedule medical appointments, attend online video consultations, upload medical records, receive digital prescriptions, and obtain AI-powered preliminary health suggestions.",
 
     features: ["User registration and profile management", "Online appointment booking and management", "Real-time telemedicine video consultations", "Digital prescription generation and management", "Medical report and document upload system","AI-powered symptom checker with health suggestions","Email and SMS notification integration","Online payment gateway integration","Admin dashboard for user and platform management"],
 
