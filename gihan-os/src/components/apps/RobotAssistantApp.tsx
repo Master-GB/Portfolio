@@ -195,13 +195,13 @@ export default function RobotAssistantApp() {
     if (raw.includes("help") || raw.includes("command")) {
       return {
         text: `Here is what I can do:
-• **"projects"** — Open projects list
-• **"skills"** — Show Gihan's technical stack
-• **"contact"** — Get Gihan's email & socials
-• **"joke"** — Tell a developer joke
-• **"wallpaper"** — Swap the OS wallpaper
-• **"diagnostics"** — Trigger a hardware diagnostics sweep
-• **"sound"** — Toggle synthesizer audio feedback`,
+• **"projects"** - Open projects list
+• **"skills"** - Show Gihan's technical stack
+• **"contact"** - Get Gihan's email & socials
+• **"joke"** - Tell a developer joke
+• **"wallpaper"** - Swap the OS wallpaper
+• **"diagnostics"** - Trigger a hardware diagnostics sweep
+• **"sound"** - Toggle synthesizer audio feedback`,
       };
     }
 
