@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF, useAnimations } from "@react-three/drei";
 import type { Group } from "three";
@@ -12,11 +12,13 @@ const AVATAR_MODELS = {
   robot: "/models/robot.glb",
 };
 
+
 interface RobotModelProps {
   avatar: "robot";
   activeAnimation?: string;
   lookAtMouse: boolean;
   onAnimationsLoaded?: (names: string[]) => void;
+  themeColor: string;
 }
 
 function RobotModel({
@@ -24,11 +26,14 @@ function RobotModel({
   activeAnimation,
   lookAtMouse,
   onAnimationsLoaded,
+  themeColor,
 }: RobotModelProps) {
   const group = useRef<Group>(null);
   const modelPath = AVATAR_MODELS[avatar];
   const { scene, animations } = useGLTF(modelPath);
   const { actions, names } = useAnimations(animations, group);
+
+
 
   // Traverse model to apply shadows and nice materials
   useEffect(() => {
@@ -45,17 +50,21 @@ function RobotModel({
           // Disable unintended transparency that may hide parts
           mat.transparent = false;
         }
-        // Enhance metallic/roughness look if material exists
+        // Keep the model's OWN color (albedo) intact — we only nudge
+        // metalness/roughness slightly so it still reads as "robot metal"
+        // without letting colored lights fully override its true color.
         if (mesh.material && "metalness" in mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial;
           if (avatar === "robot") {
-            mat.roughness = 0.3;
-            mat.metalness = 0.7;
+            mat.roughness = 0.45; // was 0.3 — less mirror-like
+            mat.metalness = 0.35; // was 0.7 — lets base color show through
           }
         }
       }
     });
   }, [scene, avatar]);
+
+
 
   // Report animations list up
   useEffect(() => {
@@ -115,12 +124,15 @@ function RobotModel({
   const positionY = -0.82;
 
   return (
-    <primitive
-      ref={group}
-      object={scene}
-      scale={scale}
-      position={[0, positionY, 0]}
-    />
+    <group>
+      <primitive
+        ref={group}
+        object={scene}
+        scale={scale}
+        position={[0, positionY, 0]}
+      />
+
+    </group>
   );
 }
 
@@ -153,6 +165,7 @@ export default function RobotScene({
 
   const currentThemeColor = THEME_COLORS[activeTheme] || THEME_COLORS.cyan;
 
+
   return (
     <Canvas
       shadows
@@ -167,32 +180,44 @@ export default function RobotScene({
       }}
       style={{ background: "transparent", touchAction: "none" }}
     >
-      <ambientLight intensity={0.55} />
-      {/* Dynamic Main Key Light */}
+      {/* Neutral ambient so the model's true material color reads correctly */}
+      <ambientLight intensity={0.6} color="#ffffff" />
+
+      {/* Main key light is now WHITE/neutral — this is what was tinting the
+          robot with the theme color before. The robot's actual color now
+          comes through instead of being overridden by the light color. */}
       <directionalLight
         position={[3, 5, 4]}
-        intensity={1.8}
-        color={currentThemeColor.str}
+        intensity={1.6}
+        color="#ffffff"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
-      {/* Cool blue/slate fill light */}
-      <directionalLight position={[-4, 2, -2]} intensity={0.4} color="#38bdf8" />
-      {/* Bottom up glow light matching active theme */}
+
+      {/* Cool blue/slate fill light (unchanged, subtle, neutral-ish) */}
+      <directionalLight position={[-4, 2, -2]} intensity={0.35} color="#a5c9ff" />
+
+      {/* Theme color is now only an ACCENT glow from below — a rim/highlight
+          effect rather than the dominant light source, so it colors the
+          edges/underside without recoloring the whole model. */}
       <pointLight
         position={[0, -1, 0.5]}
-        intensity={1.5}
-        distance={2.5}
+        intensity={0.9}
+        distance={2.2}
         color={currentThemeColor.str}
       />
-      <pointLight position={[1, 1.5, 2]} intensity={0.3} color="#ffffff" />
+      <pointLight position={[1, 1.5, 2]} intensity={0.25} color="#ffffff" />
 
-      {/* Robot model */}
+
+
+      {/* Robot model with reactive glow */}
       <RobotModel
         avatar={activeAvatar}
         activeAnimation={activeAnimation}
         lookAtMouse={isLookAtMouse}
         onAnimationsLoaded={onAnimationsLoaded}
+
+        themeColor={currentThemeColor.str}
       />
 
       {interactive && (

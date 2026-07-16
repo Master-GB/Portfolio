@@ -2,7 +2,7 @@
 
 
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 import dynamic from "next/dynamic";
 
@@ -41,26 +41,53 @@ const RobotScene = dynamic(() => import("@/components/3d/RobotScene"), {
 
 
 
-const DESKTOP_TIPS = [
+const APP_TIPS: Record<string, string[]> = {
+  about: ["Want to know more about Gihan? You're in the right place! 👤"],
+  projects: ["Here you can see all the awesome projects! 🚀", "Click on a project to see more details! 🔍"],
+  skills: ["Wow, look at all those skills! 💻", "Hover over the skills to see proficiency! ⭐"],
+  education: ["SLIIT represents! 🎓", "Check out the certifications tab too! 🏆"],
+  contact: ["Ready to reach out? Send a message! 📬", "You can also find social links here! 🌐"],
+  terminal: ["Try typing 'matrix' or 'joke' here! 📟", "Type 'help' to see available commands! 💡"],
+  settings: ["Customize the OS to your liking! ⚙️", "Try changing the wallpaper! 🎨"],
+  explorer: ["Browse through the file system! 📁"],
+  notepad: ["Jot down some ideas! 📝"],
+  resume: ["Check out that CV! 📄"],
+};
 
-  "Hi! Click me for an AI tour! 🚀",
+function getTimeTips(openApps: string[], activeAppId: string | null): string[] {
+  if (activeAppId && APP_TIPS[activeAppId]) {
+    return APP_TIPS[activeAppId];
+  }
 
-  "Need help? Double-click icons to run apps!",
+  const h = new Date().getHours();
+  const base: string[] = [];
 
-  "Right-click the desktop for settings! ⚙️",
+  if (h < 6) base.push("Burning the midnight oil? ☕ Let me help!");
+  else if (h < 12) base.push("Good morning! Ready to explore? ☀️");
+  else if (h < 17) base.push("Afternoon! Check out Gihan's projects! 🚀");
+  else if (h < 21) base.push("Evening vibes! Try the tech quiz! 🎮");
+  else base.push("Late night coding? I know the feeling! 🌙");
 
-  "Try changing my look in the AI Byte App! 🦾",
+  if (!openApps.includes("projects")) base.push("📂 Check out 8 awesome projects inside!");
+  if (!openApps.includes("skills")) base.push("💻 Explore 40+ skills across 9 categories!");
+  if (!openApps.includes("contact")) base.push("📬 Interested? Let's get in touch!");
 
-  "Type 'matrix' or 'joke' in the Terminal! 📟",
+  base.push(
+    "Click me for an AI-powered tour! 🤖",
+    "Try 'search' or 'compare' commands! 🔍",
+    "I can play a tech quiz game! 🎮",
+    "Right-click desktop for settings! ⚙️",
+    "Ask me to compare React vs Angular! ⚔️",
+    "Type 'stats' for portfolio analytics! 📊",
+  );
 
-  "Ask me to swap your wallpaper! 🎨",
-
-];
+  return base;
+}
 
 
 
 export default function Desktop() {
-  const { booted, settings, openWindow, setStartMenuOpen, windows } = useOS();
+  const { booted, settings, openWindow, setStartMenuOpen, windows, activeWindowId } = useOS();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
   const robotRef = useRef<HTMLDivElement>(null);
@@ -122,17 +149,24 @@ export default function Desktop() {
   }, [showRobotActive, settings.taskbarPosition]);
 
   const robotOpen = windows.some((w) => w.id === "robot_assistant");
+  
+  const openAppIds = useMemo(() => windows.map((w) => w.id), [windows]);
+  const tips = useMemo(() => getTimeTips(openAppIds, activeWindowId), [openAppIds, activeWindowId]);
+
+  useEffect(() => {
+    setTipIndex(0);
+  }, [activeWindowId]);
 
   // Cycle tips every 12 seconds (only when robot is visible and assistant isn't open)
   useEffect(() => {
-    if (!showRobotActive || robotOpen) return;
+    if (!showRobotActive || robotOpen || tips.length <= 1) return;
 
     const interval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % DESKTOP_TIPS.length);
+      setTipIndex((prev) => prev + 1);
     }, 12000);
 
     return () => clearInterval(interval);
-  }, [showRobotActive, robotOpen]);
+  }, [showRobotActive, robotOpen, tips.length]);
 
   if (!booted) return null;
 
@@ -243,14 +277,14 @@ export default function Desktop() {
                 <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={tipIndex}
+                      key={tips[tipIndex % tips.length]}
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ duration: 0.35 }}
                       className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
                     >
-                      {DESKTOP_TIPS[tipIndex]}
+                      {tips[tipIndex % tips.length]}
                       <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
                     </motion.div>
                   </AnimatePresence>

@@ -31,7 +31,6 @@ import {
 
 function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const parentRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,129 +38,261 @@ function ParticleCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    parentRef.current = canvas.parentElement;
-
+    let width = 0, height = 0;
     let animId: number;
     let time = 0;
 
-    interface Particle {
+    /* ---- Types ---- */
+    interface Star {
       x: number; y: number; vx: number; vy: number;
-      r: number; alpha: number; color: string;
-      baseR: number; phase: number;
+      r: number; baseR: number; alpha: number; baseAlpha: number;
+      color: string; twinkleSpeed: number; twinklePhase: number;
+      depth: number; // 0 (far/small) .. 1 (near/large) — drives parallax + glow response
+    }
+    interface Nebula {
+      x: number; y: number; r: number; hue: string; phase: number; speed: number;
+    }
+    interface Streak {
+      x: number; y: number; vx: number; vy: number; life: number; maxLife: number;
     }
 
-    const COLORS = ["rgba(139,92,246,", "rgba(99,102,241,", "rgba(59,130,246,", "rgba(168,85,247,"];
-    const particles: Particle[] = [];
+    const STAR_COLORS = ["139,92,246", "99,102,241", "59,130,246", "168,85,247", "236,72,153"];
+    const NEBULA_HUES = ["139,92,246", "59,130,246", "236,72,153"];
 
+    const stars: Star[] = [];
+    const nebulae: Nebula[] = [];
+    let streaks: Streak[] = [];
+
+    // The canvas needs to track the *app window's* size, not just its own
+    // initial mount size — this is what makes the animation fill the whole
+    // window (up to the sidebar) even after the window is maximized/resized.
     const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = width;
+      canvas.height = height;
     };
     resize();
+
+    // Observe the canvas itself AND its nearest app-window container —
+    // whichever one actually changes size when the window is maximized.
+    const sizedAncestor = canvas.closest(".projects-app-root") as HTMLElement | null;
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
+    if (sizedAncestor) ro.observe(sizedAncestor);
+    window.addEventListener("resize", resize);
 
-    for (let i = 0; i < 65; i++) {
-      const baseR = Math.random() * 2 + 0.8;
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        r: baseR,
-        baseR: baseR,
-        alpha: Math.random() * 0.6 + 0.5,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        phase: Math.random() * Math.PI * 2,
+    // Seed a layered starfield — depth drives size, drift speed & twinkle response
+    const STAR_COUNT = 95;
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const depth = Math.random();
+      const baseR = 0.6 + depth * 1.7;
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.18 * (0.4 + depth),
+        vy: (Math.random() - 0.5) * 0.18 * (0.4 + depth),
+        r: baseR, baseR,
+        alpha: 0, baseAlpha: 0.35 + depth * 0.55,
+        color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
+        twinkleSpeed: 0.4 + Math.random() * 1.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        depth,
       });
     }
 
-    // Mouse tracking - use parent container for better event capture
-    let mouseX = -1000;
-    let mouseY = -1000;
+    // Slow drifting nebula clouds for ambient colour
+    for (let i = 0; i < 3; i++) {
+      nebulae.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: 170 + Math.random() * 150,
+        hue: NEBULA_HUES[i % NEBULA_HUES.length],
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.12 + Math.random() * 0.14,
+      });
+    }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const parent = parentRef.current;
-      if (parent) {
-        const parentRect = parent.getBoundingClientRect();
-        mouseX = e.clientX - parentRect.left;
-        mouseY = e.clientY - parentRect.top;
+    // Mouse tracking — listen on `document`, not an element in the canvas's
+    // own DOM branch. The canvas sits BEHIND the sidebar and main content
+    // (lower z-index), so hovering over cards/sidebar/search bar etc. was
+    // sending mousemove to THOSE elements, which never bubbles down to a
+    // sibling listener — that's why hover wasn't working. `document`
+    // receives the event no matter what's stacked on top, and we recover
+    // the on-canvas position from the canvas's own bounding rect each time.
+    let mouseX = -1000, mouseY = -1000;
+    let glow = 0, glowTarget = 0;
+    let nextStreakIn = 140 + Math.random() * 200;
+
+    const updateMouseFromEvent = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+        mouseX = x;
+        mouseY = y;
+      } else {
+        mouseX = -1000;
+        mouseY = -1000;
       }
     };
 
-    const handleMouseLeave = () => {
-      mouseX = -1000;
-      mouseY = -1000;
+    const handleMouseMove = (e: MouseEvent) => updateMouseFromEvent(e);
+    const handleMouseLeaveWindow = () => { mouseX = -1000; mouseY = -1000; };
+
+    // A little sparkle burst wherever the cursor clicks, for extra delight
+    const handleClick = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) return;
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.25;
+        const speed = 1.4 + Math.random() * 2.2;
+        streaks.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 0, maxLife: 34 + Math.random() * 18,
+        });
+      }
     };
 
-    // Use parent container for mouse events to capture events even over other elements
-    const parent = parentRef.current;
-    if (parent) {
-      parent.addEventListener('mousemove', handleMouseMove);
-      parent.addEventListener('mouseleave', handleMouseLeave);
-    }
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeaveWindow);
+    document.addEventListener("click", handleClick);
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.02;
+      // Safety net: catches any window-size change that ResizeObserver
+      // might miss (e.g. a CSS-transition-based maximize animation) by
+      // comparing against the canvas's live rendered size every frame.
+      if (canvas.offsetWidth !== width || canvas.offsetHeight !== height) {
+        resize();
+      }
 
-      particles.forEach((p) => {
-        // Mouse interaction - attraction within 150px
-        if (mouseX > -500) {
-          const dx = mouseX - p.x;
-          const dy = mouseY - p.y;
+      ctx.clearRect(0, 0, width, height);
+      time += 0.016;
+
+      /* ---- Drifting nebula clouds ---- */
+      nebulae.forEach((n) => {
+        n.phase += 0.002 * n.speed;
+        const dx = Math.cos(n.phase) * 50;
+        const dy = Math.sin(n.phase * 0.8) * 36;
+        const grad = ctx.createRadialGradient(n.x + dx, n.y + dy, 0, n.x + dx, n.y + dy, n.r);
+        grad.addColorStop(0, `rgba(${n.hue},0.11)`);
+        grad.addColorStop(1, `rgba(${n.hue},0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+      });
+
+      /* ---- Cursor spotlight (hover effect) ---- */
+      const hovering = mouseX > -500;
+      glowTarget = hovering ? 1 : 0;
+      glow += (glowTarget - glow) * 0.08;
+      if (glow > 0.01) {
+        const spot = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 230);
+        spot.addColorStop(0, `rgba(168,85,247,${0.12 * glow})`);
+        spot.addColorStop(0.55, `rgba(99,102,241,${0.05 * glow})`);
+        spot.addColorStop(1, "rgba(99,102,241,0)");
+        ctx.fillStyle = spot;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      /* ---- Stars: drift, twinkle, and react to the cursor ---- */
+      stars.forEach((s) => {
+        if (hovering) {
+          const dx = mouseX - s.x, dy = mouseY - s.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150 && dist > 0) {
-            const force = (150 - dist) / 150 * 0.02;
-            p.vx += (dx / dist) * force;
-            p.vy += (dy / dist) * force;
+          if (dist < 170 && dist > 0) {
+            const force = ((170 - dist) / 170) * 0.024 * (0.5 + s.depth);
+            s.vx += (dx / dist) * force;
+            s.vy += (dy / dist) * force;
           }
         }
 
-        // Apply velocity with minimal damping
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.9995;
-        p.vy *= 0.9995;
+        s.x += s.vx; s.y += s.vy;
+        s.vx *= 0.985; s.vy *= 0.985;
 
-        // Boundary wrap
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
+        if (s.x < -10) s.x = width + 10;
+        if (s.x > width + 10) s.x = -10;
+        if (s.y < -10) s.y = height + 10;
+        if (s.y > height + 10) s.y = -10;
 
-        // Pulsing effect using sine wave
-        p.r = p.baseR + Math.sin(time + p.phase) * 0.5;
+        s.twinklePhase += 0.02 * s.twinkleSpeed;
+        const twinkle = 0.5 + 0.5 * Math.sin(s.twinklePhase);
+        s.alpha = s.baseAlpha * (0.45 + 0.55 * twinkle);
 
-        // Glow effect
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = `${p.color}0.8)`;
+        // Stars near the cursor flare brighter and bigger
+        let boost = 0;
+        if (hovering) {
+          const dx = mouseX - s.x, dy = mouseY - s.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) boost = 1 - dist / 150;
+        }
+        const r = s.baseR + boost * 1.9;
+        const alpha = Math.min(1, s.alpha + boost * 0.55);
 
+        ctx.shadowBlur = 8 + boost * 14;
+        ctx.shadowColor = `rgba(${s.color},0.9)`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color}${p.alpha})`;
+        ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${s.color},${alpha})`;
         ctx.fill();
-
-        // Reset shadow for performance
         ctx.shadowBlur = 0;
       });
 
-      // Draw connections with pulsing opacity
-      particles.forEach((a, i) => {
-        particles.slice(i + 1).forEach((b) => {
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
+      /* ---- Constellation links, flaring near the cursor ---- */
+      for (let i = 0; i < stars.length; i++) {
+        for (let j = i + 1; j < stars.length; j++) {
+          const a = stars[i], b = stars[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 80) {
-            const pulseOpacity = 0.1 * (1 - dist / 80) * (0.5 + 0.5 * Math.sin(time * 2));
+          if (dist < 92) {
+            let op = 0.08 * (1 - dist / 92) * (0.6 + 0.4 * Math.sin(time * 1.5));
+            if (hovering) {
+              const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+              const mdx = mouseX - mx, mdy = mouseY - my;
+              const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+              if (mdist < 160) op += (1 - mdist / 160) * 0.4;
+            }
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = `rgba(139,92,246,${pulseOpacity})`;
-            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = `rgba(139,92,246,${op})`;
+            ctx.lineWidth = 0.6;
             ctx.stroke();
           }
+        }
+      }
+
+      /* ---- Ambient shooting stars + click sparkle bursts ---- */
+      nextStreakIn -= 1;
+      if (nextStreakIn <= 0) {
+        nextStreakIn = 220 + Math.random() * 260;
+        const startX = Math.random() * width * 0.5;
+        const startY = Math.random() * height * 0.3;
+        const angle = Math.PI / 5 + Math.random() * 0.3;
+        const speed = 5 + Math.random() * 3;
+        streaks.push({
+          x: startX, y: startY,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 0, maxLife: 55,
         });
+      }
+
+      streaks = streaks.filter((s) => s.life < s.maxLife);
+      streaks.forEach((s) => {
+        s.x += s.vx; s.y += s.vy; s.life += 1;
+        const t = s.life / s.maxLife;
+        const alpha = Math.sin(t * Math.PI);
+        const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 6, s.y - s.vy * 6);
+        grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+        grad.addColorStop(1, "rgba(139,92,246,0)");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x - s.vx * 6, s.y - s.vy * 6);
+        ctx.stroke();
       });
 
       animId = requestAnimationFrame(draw);
@@ -171,10 +302,10 @@ function ParticleCanvas() {
     return () => {
       cancelAnimationFrame(animId);
       ro.disconnect();
-      if (parent) {
-        parent.removeEventListener('mousemove', handleMouseMove);
-        parent.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      window.removeEventListener("resize", resize);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeaveWindow);
+      document.removeEventListener("click", handleClick);
     };
   }, []);
 
@@ -225,12 +356,12 @@ const SIDEBAR_ITEMS = [
   { id: "all", label: "All Projects", icon: FolderKanban },
   { id: "Full Stack", label: "Full Stack", icon: Layers },
   { id: "Mobile App", label: "Mobile App", icon: Smartphone },
-   { id: "Featured", label: "Featured", icon: Star },
+  { id: "Featured", label: "Featured", icon: Star },
   { id: "Frontend", label: "Frontend", icon: Code2 },
   { id: "AI Powered", label: "AI Powered", icon: Cpu },
   { id: "UN's SDGs", label: "UN's SDGs", icon: Globe },
   { id: "Ongoing", label: "Ongoing", icon: Clock },
-  
+
 ];
 
 const STAT_CARDS = [
@@ -277,7 +408,7 @@ const TAG_COLORS: Record<string, { bg: string; text: string; border: string }> =
   "Ongoing": { bg: "rgba(245,158,11,0.25)", text: "#fcd34d", border: "rgba(245,158,11,0.5)" },
   "Mobile App": { bg: "rgba(236,72,153,0.25)", text: "#f9a8d4", border: "rgba(236,72,153,0.5)" },
   "Web App": { bg: "rgba(6,182,212,0.25)", text: "#67e8f9", border: "rgba(6,182,212,0.5)" },
-  "UN's SDGs" : { bg: "rgba(105, 41, 9, 0.25)", text: "#db8282ff", border: "rgba(33, 210, 92, 0.25)" },
+  "UN's SDGs": { bg: "rgba(105, 41, 9, 0.25)", text: "#db8282ff", border: "rgba(33, 210, 92, 0.25)" },
   "Frontend": { bg: "rgba(99,102,241,0.25)", text: "#a5b4fc", border: "rgba(99,102,241,0.5)" },
   "Android": { bg: "rgba(239,68,68,0.25)", text: "#fca5a5", border: "rgba(239,68,68,0.5)" },
 };
@@ -301,33 +432,33 @@ const TECH_BADGES: Record<string, { color: string; bg: string }> = {
   "Kubernetes": { color: "#f472b6", bg: "rgba(236,72,153,0.2)" },
   "Kafka": { color: "#eed173ff", bg: "rgba(120, 233, 60, 0.2)" },
   "Twilio": { color: "#59d2bcff", bg: "rgba(11, 129, 29, 0.2)" },
-  "Jitsi":  { color: "#37cf6aff", bg: "rgba(222, 80, 80, 0.2)2)" },
-  "PayHere" : { color: "#eaa1a1ff", bg: "rgba(101, 117, 11, 0.2)" },
+  "Jitsi": { color: "#37cf6aff", bg: "rgba(222, 80, 80, 0.2)2)" },
+  "PayHere": { color: "#eaa1a1ff", bg: "rgba(101, 117, 11, 0.2)" },
   "Spring Boot": { color: "#a5b4fc", bg: "rgba(99,102,241,0.2)" },
-  "Express": {color:"#e59d8cff", bg: "rgba(236,72,153,0.2)"},
-  "Leaflet": {color:"#5c94edff", bg: "rgba(59,130,246,0.2)"},
-  "Notify.lk": {color:"#bbcc87ff", bg: "rgba(32, 8, 142, 0.2)"},
-  "Cloudinary" : {color:"#00bfff", bg: "rgba(0, 191, 255, 0.2)"},
-  "Open-Meteo" : {color:"#6ccc7aff", bg: "rgba(10, 102, 207, 0.2)"},
-  "Google Translate" : {color:"#fbbf24", bg: "rgba(245, 158, 11, 0.2)"},
-  "Hugging" : {color:"#cb4f4fff", bg: "rgba(3, 114, 63, 0.2)"},
-  "Agile" : {color:"#e0f735ff", bg: "rgba(3, 67, 112, 0.2)"},
-  "OCR" : {color:"#9897e8ff", bg: "rgba(4, 142, 36, 0.2)"},
-  "CSS" : {color:"#89d882ff", bg: "rgba(121, 60, 6, 0.2)"},
-  "JavaScript":{color:"#73e8deff", bg: "rgba(4, 142, 36, 0.2)"},
-  "Google Map" :{color:"#f5fa9fff", bg: "rgba(6, 112, 110, 0.2)"},
-  "Kotlin" :{color:"#ca98b2ff", bg: "rgba(16, 29, 104, 0.2)"}, 
-  "Room Persistence Library" :{color:"#9bf9ddff", bg: "rgba(106, 83, 5, 0.2)"},
-  "Flow":{color:"#99be91ff", bg: "rgba(122, 4, 4, 0.2)"},
-  "Coroutines" :{color:"#d1a589ff", bg: "rgba(76, 7, 129, 0.2)"},
-  "Material Design 3" :{color:"#e8a4e1ff", bg: "rgba(6, 112, 110, 0.2)"},
-  "Vite" : {color:"#7aeda6ff", bg: "rgba(112, 71, 6, 0.2)"}
-  };
+  "Express": { color: "#e59d8cff", bg: "rgba(236,72,153,0.2)" },
+  "Leaflet": { color: "#5c94edff", bg: "rgba(59,130,246,0.2)" },
+  "Notify.lk": { color: "#bbcc87ff", bg: "rgba(32, 8, 142, 0.2)" },
+  "Cloudinary": { color: "#00bfff", bg: "rgba(0, 191, 255, 0.2)" },
+  "Open-Meteo": { color: "#6ccc7aff", bg: "rgba(10, 102, 207, 0.2)" },
+  "Google Translate": { color: "#fbbf24", bg: "rgba(245, 158, 11, 0.2)" },
+  "Hugging": { color: "#cb4f4fff", bg: "rgba(3, 114, 63, 0.2)" },
+  "Agile": { color: "#e0f735ff", bg: "rgba(3, 67, 112, 0.2)" },
+  "OCR": { color: "#9897e8ff", bg: "rgba(4, 142, 36, 0.2)" },
+  "CSS": { color: "#89d882ff", bg: "rgba(121, 60, 6, 0.2)" },
+  "JavaScript": { color: "#73e8deff", bg: "rgba(4, 142, 36, 0.2)" },
+  "Google Map": { color: "#f5fa9fff", bg: "rgba(6, 112, 110, 0.2)" },
+  "Kotlin": { color: "#ca98b2ff", bg: "rgba(16, 29, 104, 0.2)" },
+  "Room Persistence Library": { color: "#9bf9ddff", bg: "rgba(106, 83, 5, 0.2)" },
+  "Flow": { color: "#99be91ff", bg: "rgba(122, 4, 4, 0.2)" },
+  "Coroutines": { color: "#d1a589ff", bg: "rgba(76, 7, 129, 0.2)" },
+  "Material Design 3": { color: "#e8a4e1ff", bg: "rgba(6, 112, 110, 0.2)" },
+  "Vite": { color: "#7aeda6ff", bg: "rgba(112, 71, 6, 0.2)" }
+};
 
 interface Project {
   id: string;
   title: string;
-  titleMain?:string;
+  titleMain?: string;
   description: string;
   longDescription?: string;
   features?: string[];
@@ -362,44 +493,44 @@ const PROJECTS: Project[] = [
   {
     id: "p2",
     title: "SmartHealth",
-    titleMain:"SmartHealth-AI-Enabled Smart Healthcare Appointment & Telemedicine Platform",
+    titleMain: "SmartHealth-AI-Enabled Smart Healthcare Appointment & Telemedicine Platform",
     description: "SmartHealth is a cloud-native AI-enabled healthcare appointment and telemedicine platform built using Microservices Architecture. The system allows patients to book doctor appointments, attend video consultations, upload medical reports, receive digital prescriptions, and access AI-powered symptom analysis. Built with Spring Boot, Next.js, Tailwind CSS, Docker, and Kubernetes.",
     longDescription: "SmartHealth is a modern cloud-native healthcare platform inspired by real-world telemedicine systems such as Channeling.lk and oDoc. The platform was developed using Microservices Architecture to provide scalable, secure, and high-performance healthcare services for patients, doctors, and administrators.The system enables users to schedule medical appointments, attend online video consultations, upload medical records, receive digital prescriptions, and obtain AI-powered preliminary health suggestions.",
-    features: ["User registration and profile management", "Online appointment booking and management", "Real-time telemedicine video consultations", "Digital prescription generation and management", "Medical report and document upload system","AI-powered symptom checker with health suggestions","Email and SMS notification integration","Online payment gateway integration","Admin dashboard for user and platform management"],
-    tech: ["Next.js", "Spring Boot", "PostgreSQL", "Tailwind CSS", "OpenAI","Docker","Kubernetes","PayHere", "Jitsi", "Twilio", "Kafka"],
-    tags: ["Full Stack","Featured", "AI Powered"],
+    features: ["User registration and profile management", "Online appointment booking and management", "Real-time telemedicine video consultations", "Digital prescription generation and management", "Medical report and document upload system", "AI-powered symptom checker with health suggestions", "Email and SMS notification integration", "Online payment gateway integration", "Admin dashboard for user and platform management"],
+    tech: ["Next.js", "Spring Boot", "PostgreSQL", "Tailwind CSS", "OpenAI", "Docker", "Kubernetes", "PayHere", "Jitsi", "Twilio", "Kafka"],
+    tags: ["Full Stack", "Featured", "AI Powered"],
     accentColor: "#3b82f6",
     github: "https://github.com/jeyixel/Smart-Healthcare-Platform.git",
     gradient: "linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)",
-    challenges: ["Designing and managing a scalable microservices architecture", "Managing communication between multiple services", "Integrating real-time video consultation APIs","Configuring Docker containers and Kubernetes deployments","Integrating third-party payment and notification services","Managing API gateway routing and service discovery","Implementing AI-based symptom analysis functionality"],
-    outcomes: ["Successfully developed a scalable cloud-native healthcare platform", "Enhanced knowledge of DevOps practices and container orchestration", "Improved teamwork, project planning, and collaboration skills","Strengthened practical experience in full-stack software engineering","Gained hands-on experience with Spring Boot and Next.js development","Implemented secure JWT-based authentication and authorization","Improved understanding of Microservices Architecture and distributed systems"],
+    challenges: ["Designing and managing a scalable microservices architecture", "Managing communication between multiple services", "Integrating real-time video consultation APIs", "Configuring Docker containers and Kubernetes deployments", "Integrating third-party payment and notification services", "Managing API gateway routing and service discovery", "Implementing AI-based symptom analysis functionality"],
+    outcomes: ["Successfully developed a scalable cloud-native healthcare platform", "Enhanced knowledge of DevOps practices and container orchestration", "Improved teamwork, project planning, and collaboration skills", "Strengthened practical experience in full-stack software engineering", "Gained hands-on experience with Spring Boot and Next.js development", "Implemented secure JWT-based authentication and authorization", "Improved understanding of Microservices Architecture and distributed systems"],
   },
   {
     id: "p3",
     title: "RescueNet",
-    titleMain :"RescueNet-Disaster Response & Emergency Coordination Platform",
+    titleMain: "RescueNet-Disaster Response & Emergency Coordination Platform",
     description: "RescueNet is a MERN-based disaster response and emergency coordination platform developed under UN SDG 11 - Sustainable Cities and Communities. It integrates real-time disaster intelligence, shelter management, SOS help requests, NGO coordination, routing, and missing person reporting into a unified system designed to improve disaster resilience and response efficiency.",
-    longDescription: "RescueNet is a MERN-based disaster response and emergency coordination platform developed under UN SDG 11 - Sustainable Cities and Communities. It integrates real-time disaster intelligence, shelter management, SOS help requests, NGO coordination, routing, and missing person reporting into a unified system designed to improve disaster resilience and response efficiency. The platform leverages global APIs (USGS, NASA FIRMS, GDACS, ReliefWeb), geospatial indexing, AI-powered triaging, and real-time communication technologies to deliver situational awareness, resource coordination, and structured emergency workflows. Its modular backend architecture ensures scalability, security, and maintainability, making it suitable for real-world deployment in disaster-prone regions.",
-    features: ["Real-time disaster intelligence from global APIs (USGS, NASA FIRMS, GDACS, ReliefWeb)", "Interactive map with geospatial indexing and disaster zones", "SOS help request system with location tracking", "Shelter management with capacity and availability tracking", "NGO coordination and resource allocation platform", "Missing person reporting and matching system",  "Real-time notifications via SMS and email","Relief Campaigns support", "Task Management module","Developed comprehensive testing strategies including performance,unit and integration testing"],
-    tech: ["React", "Node.js", "MongoDB", "Express","Socket.io","Notify.lk","Cloudinary","Leaflet","Google Translate","Open-Meteo","Hugging"],
-    tags: ["Full Stack","Featured","UN's SDGs"],
+    longDescription: "RescueNet is a MERN-based disaster response and emergency coordination platform developed under UN SDG 11 - Sustainable Cities and Communities. It integrates real-time disaster intelligence, shelter management, SOS help requests, NGO coordination, routing, and missing person reporting into a unified system designed to improve disaster resilience and response efficiency. The platform leverages global APIs (USGS, NASA FIRMS, GDACS, ReliefWeb), geospatial indexing, and real-time communication technologies to deliver situational awareness, resource coordination, and structured emergency workflows. Its modular backend architecture ensures scalability, security, and maintainability, making it suitable for real-world deployment in disaster-prone regions.",
+    features: ["Real-time disaster intelligence from global APIs (USGS, NASA FIRMS, GDACS, ReliefWeb)", "Interactive map with geospatial indexing and disaster zones", "SOS help request system with location tracking", "Shelter management with capacity and availability tracking", "NGO coordination and resource allocation platform", "Missing person reporting and matching system", "Real-time notifications via SMS and email", "Relief Campaigns support", "Task Management module"],
+    tech: ["React", "Node.js", "MongoDB", "Express", "Socket.io", "Notify.lk", "Cloudinary", "Leaflet", "Google Translate", "Open-Meteo", "Hugging"],
+    tags: ["Full Stack", "Featured", "UN's SDGs"],
     accentColor: "#10b981",
     github: "https://github.com/Master-GB/RescueNet.git",
     demo: "https://rescue-net-8jet.vercel.app/",
-    image:"/images/rescunet.png",
+    image: "/images/rescunet.png",
     gradient: "linear-gradient(135deg,#052e16 0%,#14532d 50%,#052e16 100%)",
     challenges: ["Integrating multiple global disaster APIs with different data formats", "Implementing real-time geospatial indexing and mapping", "Managing high-concurrency SOS requests during emergencies", "Ensuring data privacy and security for sensitive information"],
-    outcomes: ["Successfully developed a fully functional full stack MERN-based Web application","Successfully integrated 5+ global disaster APIs for real-time intelligence", "Achieved sub-second response times for SOS requests",  "Deployed in pilot regions with positive feedback from emergency responders"],
+    outcomes: ["Successfully developed a fully functional full stack MERN-based Web application", "Successfully integrated 5+ global disaster APIs for real-time intelligence", "Achieved sub-second response times for SOS requests", "Deployed in pilot regions with positive feedback from emergency responders"],
   },
   {
     id: "p4",
     title: "UniVerse",
-    titleMain :"UniVerse-Academic & Career Support Management System (ACSMS)",
+    titleMain: "UniVerse-Academic & Career Support Management System (ACSMS)",
     description: "UniVerse is a comprehensive Academic & Career Support Management System designed to bridge the gap between students, mentors, and academic resources. This full-stack application provides a unified platform for mentorship, course management, resource sharing, and career development.",
     longDescription: "Many students struggle to find structured guidance for both academics and career preparation. This project aims to bridge that gap by combines academic support tools (exam preparation, resource hub) with career development features (mentorship, internship portal, skill assessments) to give students a one-stop solution for personal and professional growth.So the ACSMS is designed to help university students improve academic performance, prepare for exams, and enhance career readiness by providing an integrated platform for learning resources, mentorship, and internship opportunities.",
-    features: ["Course Management: Enroll in courses, track progress, and access learning materials", "Mentorship Program: Connect with experienced mentors and schedule sessions", "Resource Hub: Access a vast library of academic resources and past papers", "Career Development: Build resumes, prepare for interviews, and gets tips", "Access AI agent and get help", "Guidance & Support: Get academic and career guidance from mentors", "Mentor Dashboard: Manage mentorship sessions and track student progress","Resource Management: Share resources, articles, and study materials","Quiz System: Practice with subject-specific quizzes"],
-    tech: ["React", "Node.js", "MongoDB", "Express","OpenAI", "Agile","JavaScript"],
-    tags: ["Full Stack","Featured", "AI Powered"],
+    features: ["Course Management: Enroll in courses, track progress, and access learning materials", "Mentorship Program: Connect with experienced mentors and schedule sessions", "Resource Hub: Access a vast library of academic resources and past papers", "Career Development: Build resumes, prepare for interviews, and gets tips", "Access AI agent and get help", "Guidance & Support: Get academic and career guidance from mentors", "Mentor Dashboard: Manage mentorship sessions and track student progress", "Resource Management: Share resources, articles, and study materials", "Quiz System: Practice with subject-specific quizzes"],
+    tech: ["React", "Node.js", "MongoDB", "Express", "OpenAI", "Agile", "JavaScript"],
+    tags: ["Full Stack", "Featured", "AI Powered"],
     accentColor: "#ec4899",
     github: "https://github.com/Master-GB/UniVerse.git",
     gradient: "linear-gradient(135deg,#4a044e 0%,#701a75 50%,#4a044e 100%)",
@@ -409,60 +540,60 @@ const PROJECTS: Project[] = [
   {
     id: "p5",
     title: "GreenPulse",
-    titleMain:"GreenPulse-Community-Driven Clean Energy Platform",
+    titleMain: "GreenPulse-Community-Driven Clean Energy Platform",
     description: "GreenPulse is a community-driven mobile application designed to promote affordable and clean energy access. It enables households to donate renewable energy as credits, track community energy usage, support low-income families, and encourage sustainable energy practices through transparency, gamification, and smart allocation.",
     longDescription: "GreenPulse is a mobile application developed under UN SDG 7 - Affordable and Clean Energy. The platform connects households with surplus renewable energy to communities in need, creating a sustainable energy sharing ecosystem. Users can donate energy credits, track their environmental impact, discover environmental projects, and participate in community-driven sustainability initiatives. The app features interactive maps, real-time updates, gamification elements, and comprehensive impact tracking to make clean energy accessible and engaging for everyone.",
-    features: ["Donate energy through credits/coins","Pay electricity bill using donated credit/coins","Project Discovery and Donation: Browse and filter environmental projects and donate", "Energy tracking module using OCR technology.", "User authentication and profile management","Earn digital badges and certificates for participation","OCR for bill scanning and AI-based credit allocation assistant"],
+    features: ["Donate energy through credits/coins", "Pay electricity bill using donated credit/coins", "Project Discovery and Donation: Browse and filter environmental projects and donate", "Energy tracking module using OCR technology.", "User authentication and profile management", "Earn digital badges and certificates for participation", "OCR for bill scanning and AI-based credit allocation assistant"],
     tech: ["React Native", "TypeScript", "Tailwind CSS", "Firebase", "OCR", "Google Map"],
-    tags: ["Mobile App","Featured","UN's SDGs"],
+    tags: ["Mobile App", "Featured", "UN's SDGs"],
     accentColor: "#06b6d4",
     github: "https://github.com/Master-GB/GreenPulse.git",
     demo: "https://mysliit-my.sharepoint.com/personal/it23143104_my_sliit_lk/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fit23143104%5Fmy%5Fsliit%5Flk%2FDocuments%2FY3S1%2FY3S1%2DWD%2D03&ga=1",
     gradient: "linear-gradient(135deg,#082f49 0%,#0c4a6e 50%,#082f49 100%)",
-    image:"/images/promo.jpg",
+    image: "/images/promo.jpg",
     challenges: ["Designing an intuitive energy credit system that accurately tracks and allocates renewable energy donations", "Implementing real-time energy donation monitoring and visualization for community impact tracking", "Creating an interactive map system that efficiently displays and filters environmental projects by location", "Learning and implementing Firebase for the first time including real-time database and authentication", "Adapting to React Native framework for the first time while building a cross-platform mobile application", "Managing project continuity after a team member left mid-project, redistributing tasks and maintaining development momentum", "Delivering a fully functional application within tight time constraints while ensuring quality and meeting all requirements"],
-    outcomes: ["Successfully developed a cross-platform mobile application using React Native with TypeScript", "Implemented a comprehensive energy credit tracking system with real-time updates",  "Integrated Firebase for real-time database and authentication", "Built an interactive map system with filtering capabilities for project discovery", "Contributed to UN SDG 7 by creating a platform that promotes affordable and clean energy access", "Gained expertise in mobile app development with focus on sustainability and social impact"],
+    outcomes: ["Successfully developed a cross-platform mobile application using React Native with TypeScript", "Implemented a comprehensive energy credit tracking system with real-time updates", "Integrated Firebase for real-time database and authentication", "Built an interactive map system with filtering capabilities for project discovery", "Contributed to UN SDG 7 by creating a platform that promotes affordable and clean energy access", "Gained expertise in mobile app development with focus on sustainability and social impact"],
   },
   {
     id: "p6",
     title: "HodaHitha.lk",
-    titleMain :"HodaHitha.lk-Surplus Food Reduction and Redistribution System",
+    titleMain: "HodaHitha.lk-Surplus Food Reduction and Redistribution System",
     description: "HodaHitha.lk is designed to connect restaurants, grocery stores, households, NGOs, and volunteers to efficiently donate and distribute excess food to people in need. The system uses real-time tracking, volunteer coordination, route optimization, and smart food management to reduce food waste and fight hunger in Sri Lanka",
     longDescription: "HodaHitha.lk is a full-stack web-based food redistribution platform developed to address the growing issue of food waste and hunger in Sri Lanka. The system bridges the gap between food donors and underprivileged communities by enabling restaurants, supermarkets, hotels, households, NGOs, and volunteers to collaborate through a centralized digital platform.The system focuses on reducing food waste, improving food safety, enhancing volunteer coordination, and creating a sustainable social impact through technology-driven food redistribution.The platform includes multiple interconnected modules such as donor management, volunteer coordination, food request management, inventory tracking, partnership management, real-time notifications, and delivery route optimization. Donors can post surplus food with expiry details, while volunteers can accept delivery tasks and navigate optimized routes using GPS and Google Maps integration. NGOs and charities can request food in real time, ensuring efficient redistribution to those in need",
     features: ["Donor Management: Restaurants, supermarkets, hotels, and households can register and post surplus food donations", "Food Listing with Expiry Tracking: Donors can list food items with quantity, expiry dates, and pickup/delivery details", "Volunteer Coordination: Volunteers can browse available donations, accept delivery tasks, and manage their schedules", "Route Optimization: GPS and Google Maps integration for optimized delivery routes and real-time navigation", "NGO/Charity Requests: NGOs and charities can request specific food items based on community needs", "Real-time Notifications: SMS and push notifications via Twilio for donation alerts, task assignments, and delivery updates", "Inventory Tracking: Real-time inventory management for operating manager to track food availability and distribution", "Partnership Management: Platform for connecting food businesses with NGOs and volunteer networks", "Impact Dashboard: Analytics showing food saved, meals provided, and environmental impact metrics"],
-    tech: ["React", "Node.js", "Chart.js", "MongoDB", "HTML","CSS","JavaScript","Google Map","Leaflet","Twilio"],
+    tech: ["React", "Node.js", "Chart.js", "MongoDB", "HTML", "CSS", "JavaScript", "Google Map", "Leaflet", "Twilio"],
     tags: ["Full stack", "UN's SDGs", "Featured"],
     accentColor: "#f59e0b",
     github: "https://github.com/Master-GB/HodaHitha.lk.git",
     gradient: "linear-gradient(135deg,#451a03 0%,#78350f 50%,#451a03 100%)",
-    challenges: ["Implementing real-time route optimization using Google Maps API to minimize delivery time and fuel consumption", "Managing food safety and expiry tracking to ensure only safe-to-consume food is redistributed", "Coordinating multiple stakeholders (donors, volunteers, NGOs) with different schedules and availability","Building a scalable inventory system to handle large volumes of food donations and distribution data"],
+    challenges: ["Implementing real-time route optimization using Google Maps API to minimize delivery time and fuel consumption", "Managing food safety and expiry tracking to ensure only safe-to-consume food is redistributed", "Coordinating multiple stakeholders (donors, volunteers, NGOs) with different schedules and availability", "Building a scalable inventory system to handle large volumes of food donations and distribution data"],
     outcomes: ["Successfully developed a full-stack web platform connecting food donors, volunteers, and NGOs", "Implemented real-time route optimization", "Created a comprehensive food safety tracking system with automated expiry monitoring", "Built an interactive dashboard showing impact metrics: 5000+ meals saved, 200+ active donors, 150+ volunteers", "Contributed to UN SDG 2 (Zero Hunger) and SDG 12 (Responsible Consumption) by reducing food waste", "Gained expertise in full-stack development with focus on social impact and sustainability", "Implemented secure authentication and role-based access control for different user types"],
   },
   {
     id: "p7",
     title: "FinWise",
-    titleMain:"FinWise - Personal Finance Manager",
+    titleMain: "FinWise - Personal Finance Manager",
     description: "FinWise is a comprehensive personal finance management application designed to android users.it help users track their expenses, manage budgets, and gain valuable insights into their spending habits. The app features intuitive dashboards, smart notifications, and detailed analytics to help users make informed financial decisions and achieve their savings goals.",
     longDescription: "FinWise is a native Android application built with Kotlin that provides users with powerful tools to manage their personal finances effectively. The app enables users to track income and expenses, categorize transactions, set and monitor budgets, and gain insights through detailed analytics and reports. Built using MVVM architecture with Room Persistence Library for local data storage, the app ensures data privacy and offline functionality. The application features a modern Material Design 3 interface, secure user authentication with email verification, smart notifications for bill reminders and budget alerts, and comprehensive financial analytics with visual spending overviews and category-wise breakdowns.",
-    features: ["Financial Management: Track income and expenses with categorization", "Set and monitor budgets with multi-currency support", "User Authentication: Secure sign up and login", "Dashboard & Analytics: Visual spending overview with charts", "Category-wise expense breakdown and budget progress tracking", "Monthly/Weekly/Daily transaction views for detailed analysis", "Smart Notifications: Transaction reminders,daily summary and budget limit alerts","Backup and Restore Data"],
-    tech: ["Kotlin","Room Persistence Library","Material Design 3","Coroutines","Flow"],
-    tags: ["Mobile App","Android"],
+    features: ["Financial Management: Track income and expenses with categorization", "Set and monitor budgets with multi-currency support", "User Authentication: Secure sign up and login", "Dashboard & Analytics: Visual spending overview with charts", "Category-wise expense breakdown and budget progress tracking", "Monthly/Weekly/Daily transaction views for detailed analysis", "Smart Notifications: Transaction reminders,daily summary and budget limit alerts", "Backup and Restore Data"],
+    tech: ["Kotlin", "Room Persistence Library", "Material Design 3", "Coroutines", "Flow"],
+    tags: ["Mobile App", "Android"],
     accentColor: "#ef4444",
     github: "https://github.com/Master-GB/FinWise.git",
     demo: "",
     gradient: "linear-gradient(135deg,#450a0a 0%,#7f1d1d 50%,#450a0a 100%)",
-    challenges: ["Learning Kotlin and Android development for the first time while building a production-ready application","Designing an efficient database schema using Room Persistence Library for complex financial data relationships","Building real-time budget tracking and alert system using Kotlin Coroutines and Flow", "Creating interactive charts and visualizations for financial analytics using Android native libraries", "Handling offline data synchronization and ensuring data consistency across app sessions"],
+    challenges: ["Learning Kotlin and Android development for the first time while building a production-ready application", "Designing an efficient database schema using Room Persistence Library for complex financial data relationships", "Building real-time budget tracking and alert system using Kotlin Coroutines and Flow", "Creating interactive charts and visualizations for financial analytics using Android native libraries", "Handling offline data synchronization and ensuring data consistency across app sessions"],
     outcomes: ["Successfully developed a native Android application using Kotlin with MVVM architecture", "Implemented Room Persistence Library for efficient local data storage,backup and retrieval", "Created a secure authentication system", "Built comprehensive financial analytics with interactive charts and visualizations", "Implemented smart notification system for reminders and budget alerts", "Gained expertise in Android development with modern Kotlin features and coroutines"],
   },
   {
     id: "p8",
     title: "MediFlow",
-    titleMain:"MediFlow-Smart Clinic & Patient Management System ",
+    titleMain: "MediFlow-Smart Clinic & Patient Management System ",
     description: "Project description goes here",
     longDescription: "",
     features: [""],
-    tech: ["Vite","Tailwind CSS","MongoDB","Node.js","Express"],
-    tags: ["Full Stack","Featured","AI Powered","Ongoing"],
+    tech: ["Vite", "Tailwind CSS", "MongoDB", "Node.js", "Express"],
+    tags: ["Full Stack", "Featured", "AI Powered", "Ongoing"],
     accentColor: "#a855f7",
     github: "https://github.com/Master-GB/MediFlow.git",
     demo: "",
@@ -841,11 +972,12 @@ function ProjectCard({ project, index, onClick }: { project: Project; index: num
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              transition: "transform 0.4s ease, box-shadow 0.4s ease",
-              transform: hovered ? "scale(1.08)" : "scale(1)",
+              transition: "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transform: hovered ? "scale(1.05)" : "scale(1)",
               zIndex: hovered ? 2 : 1,
               transformOrigin: "center center",
-              boxShadow: hovered ? "0 18px 40px rgba(0,0,0,0.35)" : "none",
+              boxShadow: hovered ? "0 20px 50px rgba(0,0,0,0.4)" : "0 10px 25px rgba(0,0,0,0.15)",
+              willChange: "transform, box-shadow, opacity",
             }}
           />
         ) : (
@@ -1483,68 +1615,68 @@ export default function ProjectsApp() {
                 })()}
               </motion.div>
             </h2>
-            <p style={{ margin: "0.35rem 0 0", fontSize: "0.9rem", color: "#385379ff",fontWeight:"400" }}>
+            <p style={{ margin: "0.35rem 0 0", fontSize: "0.9rem", color: "#385379ff", fontWeight: "400" }}>
               {CATEGORY_INFO[activeNav]?.description || "Explore my creative work and the solutions I've built."}
             </p>
           </motion.div>
 
           {/* Stat Cards */}
           {activeNav === "all" && (
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(4,1fr)",
-            gap: "0.75rem", marginBottom: "1.25rem",
-          }}
-          className="grid grid-cols-4 gap-3 mb-5 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1"
-          >
-            {STAT_CARDS.map((card, i) => {
-              const Icon = card.icon;
-              return (
-                <motion.div
-                  key={card.label}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
-                  className="stat-card"
-                  style={{ background: card.gradient }}
-                >
-                  {/* Glow */}
-                  <div style={{
-                    position: "absolute", top: 0, right: 0, width: 60, height: 60,
-                    borderRadius: "50%",
-                    background: `radial-gradient(circle, ${card.glow} 0%, transparent 70%)`,
-                    filter: "blur(16px)",
-                  }} />
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(4,1fr)",
+              gap: "0.75rem", marginBottom: "1.25rem",
+            }}
+              className="grid grid-cols-4 gap-3 mb-5 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1"
+            >
+              {STAT_CARDS.map((card, i) => {
+                const Icon = card.icon;
+                return (
+                  <motion.div
+                    key={card.label}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
+                    className="stat-card"
+                    style={{ background: card.gradient }}
+                  >
+                    {/* Glow */}
                     <div style={{
-                      width: 32, height: 32, borderRadius: 9,
-                      background: `rgba(${card.color.slice(1).match(/../g)!.map(x => parseInt(x, 16)).join(",")},0.2)`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      border: `1px solid ${card.color}40`,
-                    }}>
-                      <Icon size={16} style={{ color: card.color, filter: `drop-shadow(0 0 4px ${card.color})` }} />
+                      position: "absolute", top: 0, right: 0, width: 60, height: 60,
+                      borderRadius: "50%",
+                      background: `radial-gradient(circle, ${card.glow} 0%, transparent 70%)`,
+                      filter: "blur(16px)",
+                    }} />
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 9,
+                        background: `rgba(${card.color.slice(1).match(/../g)!.map(x => parseInt(x, 16)).join(",")},0.2)`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: `1px solid ${card.color}40`,
+                      }}>
+                        <Icon size={16} style={{ color: card.color, filter: `drop-shadow(0 0 4px ${card.color})` }} />
+                      </div>
                     </div>
-                  </div>
-                  <div style={{
-                    fontSize: "1.6rem", fontWeight: 800, color: "#fff",
-                    lineHeight: 1, marginBottom: "0.2rem",
-                    textShadow: `0 0 20px ${card.glow}`,
-                  }}>
-                    <AnimatedCounter target={card.value} suffix={card.suffix} />
-                  </div>
-                  <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: 500 }}>
-                    {card.label}
-                  </div>
-                  <div style={{
-                    fontSize: "0.65rem",
-                    color: card.color,
-                    filter: `drop-shadow(0 0 4px ${card.color})`,
-                  }}>
-                    {card.sub}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <div style={{
+                      fontSize: "1.6rem", fontWeight: 800, color: "#fff",
+                      lineHeight: 1, marginBottom: "0.2rem",
+                      textShadow: `0 0 20px ${card.glow}`,
+                    }}>
+                      <AnimatedCounter target={card.value} suffix={card.suffix} />
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: 500 }}>
+                      {card.label}
+                    </div>
+                    <div style={{
+                      fontSize: "0.65rem",
+                      color: card.color,
+                      filter: `drop-shadow(0 0 4px ${card.color})`,
+                    }}>
+                      {card.sub}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           )}
 
           {/* Search & Filter Bar */}
@@ -1567,7 +1699,7 @@ export default function ProjectsApp() {
               borderRadius: 12,
               transition: "border-color 0.2s",
             }}
-            className="w-full lg:w-[800px] md:w-full"
+              className="w-full lg:w-[800px] md:w-full"
             >
               <Search size={14} style={{ color: "#475569", flexShrink: 0 }} />
               <input
