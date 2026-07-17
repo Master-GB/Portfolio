@@ -1230,7 +1230,7 @@ const MOCK_SKILLS = [
         subcategories: [{
             category: "Database",
             items: [
-                { name: "MongoDB", level: 95 }, { name: "SuperBase", level: 85 },
+                { name: "MongoDB", level: 95 }, { name: "SupaBase", level: 85 },
                 { name: "MySQL", level: 78 }, { name: "Firebase", level: 82 },
             ],
         }],

@@ -533,12 +533,12 @@ export default function AboutApp() {
 
   const skills = [
     { label: "Communication Skills", value: 70, color: "#f472b6" },
-    { label: "Problem Solving", value: 90, color: "#f59e0b" },
-    { label: "Team Collaboration", value: 95, color: "#34d399" },
+    { label: "Problem Solving", value: 95, color: "#f59e0b" },
+    { label: "Team Collaboration", value: 90, color: "#34d399" },
     { label: "Leadership", value: 90, color: "#6366f1" },
     { label: "Time Management", value: 90, color: "#22d3ee" },
     { label: "Adaptability", value: 90, color: "#1bc120ff" },
-    { label: "Creativity", value: 80, color: "#ce6911ff" },
+    { label: "Continuous Learning", value: 98, color: "#ce6911ff" },
     { label: "Decision Making", value: 90, color: "#c92f2fff" },
   ];
 

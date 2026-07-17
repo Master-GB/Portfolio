@@ -41,6 +41,7 @@ export interface OSSettings {
   bootAnimation: boolean;
   autoOpenWelcome: boolean;
   desktopGrid: boolean;
+  windowSnap?: boolean;
 
   // Accessibility
   largerText: boolean;
