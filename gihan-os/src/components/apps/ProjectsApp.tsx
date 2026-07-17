@@ -67,7 +67,7 @@ function ParticleCanvas() {
     // initial mount size — this is what makes the animation fill the whole
     // window (up to the sidebar) even after the window is maximized/resized.
     const resize = () => {
-      width = canvas.offsetWidth;
+      width = window.innerWidth;
       height = canvas.offsetHeight;
       canvas.width = width;
       canvas.height = height;
@@ -106,7 +106,7 @@ function ParticleCanvas() {
       nebulae.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        r: 170 + Math.random() * 150,
+        r: 280 + Math.random() * 220,
         hue: NEBULA_HUES[i % NEBULA_HUES.length],
         phase: Math.random() * Math.PI * 2,
         speed: 0.12 + Math.random() * 0.14,
@@ -128,7 +128,7 @@ function ParticleCanvas() {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+      if (x >= 0 && x <= canvas.offsetWidth && y >= 0 && y <= rect.height) {
         mouseX = x;
         mouseY = y;
       } else {
@@ -145,7 +145,7 @@ function ParticleCanvas() {
       const rect = canvas.getBoundingClientRect();
       const cx = e.clientX - rect.left;
       const cy = e.clientY - rect.top;
-      if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) return;
+      if (cx < 0 || cx > canvas.offsetWidth || cy < 0 || cy > rect.height) return;
       for (let i = 0; i < 12; i++) {
         const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.25;
         const speed = 1.4 + Math.random() * 2.2;
@@ -246,8 +246,8 @@ function ParticleCanvas() {
           const a = stars[i], b = stars[j];
           const dx = a.x - b.x, dy = a.y - b.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 92) {
-            let op = 0.08 * (1 - dist / 92) * (0.6 + 0.4 * Math.sin(time * 1.5));
+          if (dist < 140) {
+            let op = 0.08 * (1 - dist / 140) * (0.6 + 0.4 * Math.sin(time * 1.5));
             if (hovering) {
               const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
               const mdx = mouseX - mx, mdy = mouseY - my;
@@ -268,7 +268,7 @@ function ParticleCanvas() {
       nextStreakIn -= 1;
       if (nextStreakIn <= 0) {
         nextStreakIn = 220 + Math.random() * 260;
-        const startX = Math.random() * width * 0.5;
+        const startX = Math.random() * width;
         const startY = Math.random() * height * 0.3;
         const angle = Math.PI / 5 + Math.random() * 0.3;
         const speed = 5 + Math.random() * 3;
@@ -487,6 +487,7 @@ const PROJECTS: Project[] = [
     github: "https://github.com/Master-GB",
     demo: "https://github.com/Master-GB",
     gradient: "linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e1b4b 100%)",
+    image: "/images/port.png",
     challenges: ["Implementing smooth window dragging without lag", "Managing complex state for window system", "Integrating 3D graphics with React components"],
     outcomes: ["Created a unique and memorable portfolio experience", "Demonstrated advanced React and Three.js skills", "Received positive feedback on the innovative design"],
   },
@@ -517,7 +518,7 @@ const PROJECTS: Project[] = [
     accentColor: "#10b981",
     github: "https://github.com/Master-GB/RescueNet.git",
     demo: "https://rescue-net-8jet.vercel.app/",
-    image: "/images/rescunet.png",
+    image: "/images/res.png",
     gradient: "linear-gradient(135deg,#052e16 0%,#14532d 50%,#052e16 100%)",
     challenges: ["Integrating multiple global disaster APIs with different data formats", "Implementing real-time geospatial indexing and mapping", "Managing high-concurrency SOS requests during emergencies", "Ensuring data privacy and security for sensitive information"],
     outcomes: ["Successfully developed a fully functional full stack MERN-based Web application", "Successfully integrated 5+ global disaster APIs for real-time intelligence", "Achieved sub-second response times for SOS requests", "Deployed in pilot regions with positive feedback from emergency responders"],
@@ -534,6 +535,7 @@ const PROJECTS: Project[] = [
     accentColor: "#ec4899",
     github: "https://github.com/Master-GB/UniVerse.git",
     gradient: "linear-gradient(135deg,#4a044e 0%,#701a75 50%,#4a044e 100%)",
+    image: "/images/universe.png",
     challenges: ["Managing file uploads for resources and documents with proper storage optimization", "Implementing efficient search and filtering for large resource libraries", "Adapting to Agile methodology as first-time practitioners with 2-week sprint cycles", "Effectively conducting daily stand-ups and sprint retrospectives for continuous improvement", "Managing changing requirements through Agile backlog refinement and user story mapping", "Coordinating team tasks using Kanban boards and sprint planning sessions"],
     outcomes: ["Successfully implemented Agile methodology with 2-week sprints, daily stand-ups, and sprint retrospectives", "Applied Scrum practices including user story mapping, sprint planning, and backlog grooming", "Developed a fully functional MERN stack application with modular architecture", "Implemented secure authentication with role-based access control", "Integrated OpenAI API(Gemini) to provide personalized academic and career recommendations", "Improved collaboration and communication skills through Agile team practices", "Gained proficiency in using project management tools (Jira) for sprint tracking", "Learned to embrace iterative development and continuous feedback loops", "Enhanced ability to estimate task complexity and manage sprint velocity effectively"],
   },
@@ -550,7 +552,7 @@ const PROJECTS: Project[] = [
     github: "https://github.com/Master-GB/GreenPulse.git",
     demo: "https://mysliit-my.sharepoint.com/personal/it23143104_my_sliit_lk/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fit23143104%5Fmy%5Fsliit%5Flk%2FDocuments%2FY3S1%2FY3S1%2DWD%2D03&ga=1",
     gradient: "linear-gradient(135deg,#082f49 0%,#0c4a6e 50%,#082f49 100%)",
-    image: "/images/promo.jpg",
+    image: "/images/green.png",
     challenges: ["Designing an intuitive energy credit system that accurately tracks and allocates renewable energy donations", "Implementing real-time energy donation monitoring and visualization for community impact tracking", "Creating an interactive map system that efficiently displays and filters environmental projects by location", "Learning and implementing Firebase for the first time including real-time database and authentication", "Adapting to React Native framework for the first time while building a cross-platform mobile application", "Managing project continuity after a team member left mid-project, redistributing tasks and maintaining development momentum", "Delivering a fully functional application within tight time constraints while ensuring quality and meeting all requirements"],
     outcomes: ["Successfully developed a cross-platform mobile application using React Native with TypeScript", "Implemented a comprehensive energy credit tracking system with real-time updates", "Integrated Firebase for real-time database and authentication", "Built an interactive map system with filtering capabilities for project discovery", "Contributed to UN SDG 7 by creating a platform that promotes affordable and clean energy access", "Gained expertise in mobile app development with focus on sustainability and social impact"],
   },
@@ -566,6 +568,7 @@ const PROJECTS: Project[] = [
     accentColor: "#f59e0b",
     github: "https://github.com/Master-GB/HodaHitha.lk.git",
     gradient: "linear-gradient(135deg,#451a03 0%,#78350f 50%,#451a03 100%)",
+     image: "/images/hitha.png",
     challenges: ["Implementing real-time route optimization using Google Maps API to minimize delivery time and fuel consumption", "Managing food safety and expiry tracking to ensure only safe-to-consume food is redistributed", "Coordinating multiple stakeholders (donors, volunteers, NGOs) with different schedules and availability", "Building a scalable inventory system to handle large volumes of food donations and distribution data"],
     outcomes: ["Successfully developed a full-stack web platform connecting food donors, volunteers, and NGOs", "Implemented real-time route optimization", "Created a comprehensive food safety tracking system with automated expiry monitoring", "Built an interactive dashboard showing impact metrics: 5000+ meals saved, 200+ active donors, 150+ volunteers", "Contributed to UN SDG 2 (Zero Hunger) and SDG 12 (Responsible Consumption) by reducing food waste", "Gained expertise in full-stack development with focus on social impact and sustainability", "Implemented secure authentication and role-based access control for different user types"],
   },
@@ -582,6 +585,7 @@ const PROJECTS: Project[] = [
     github: "https://github.com/Master-GB/FinWise.git",
     demo: "",
     gradient: "linear-gradient(135deg,#450a0a 0%,#7f1d1d 50%,#450a0a 100%)",
+    image: "/images/fin.png",
     challenges: ["Learning Kotlin and Android development for the first time while building a production-ready application", "Designing an efficient database schema using Room Persistence Library for complex financial data relationships", "Building real-time budget tracking and alert system using Kotlin Coroutines and Flow", "Creating interactive charts and visualizations for financial analytics using Android native libraries", "Handling offline data synchronization and ensuring data consistency across app sessions"],
     outcomes: ["Successfully developed a native Android application using Kotlin with MVVM architecture", "Implemented Room Persistence Library for efficient local data storage,backup and retrieval", "Created a secure authentication system", "Built comprehensive financial analytics with interactive charts and visualizations", "Implemented smart notification system for reminders and budget alerts", "Gained expertise in Android development with modern Kotlin features and coroutines"],
   },
@@ -598,6 +602,7 @@ const PROJECTS: Project[] = [
     github: "https://github.com/Master-GB/MediFlow.git",
     demo: "",
     gradient: "linear-gradient(135deg,#3b0764 0%,#581c87 50%,#3b0764 100%)",
+    image: "/images/mediflow.png",
     challenges: [""],
     outcomes: [""],
   },
@@ -1489,7 +1494,7 @@ export default function ProjectsApp() {
         {/* Background glow orbs */}
         <div style={{
           position: "absolute", top: "20%", left: "10%",
-          width: 300, height: 300, borderRadius: "50%",
+          width: 400, height: 300, borderRadius: "50%",
           background: "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)",
           filter: "blur(40px)", pointerEvents: "none",
         }} />
