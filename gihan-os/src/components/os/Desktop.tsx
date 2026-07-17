@@ -261,7 +261,7 @@ export default function Desktop() {
       {showRobotActive && !robotOpen && (
         <div
           ref={robotRef}
-          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[200px] w-[240px] md:right-0 md:h-[220px] md:w-[200px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
+          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[200px] w-[200px] md:right-0 md:h-[220px] md:w-[245px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
           onMouseEnter={() => {
             if (settings.soundEnabled) sound.play("beep");
           }}
@@ -293,7 +293,7 @@ export default function Desktop() {
 
           {/* 3D Canvas rendering */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             className="h-[210px] w-full md:h-[280px] cursor-pointer relative"

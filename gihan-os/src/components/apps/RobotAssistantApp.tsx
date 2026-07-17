@@ -660,7 +660,7 @@ export default function RobotAssistantApp() {
 
   return (
     <div
-      className="grid h-full w-full grid-cols-1 overflow-hidden rounded-xl bg-slate-950/40 text-slate-200 md:grid-cols-12"
+      className="grid h-full w-full grid-cols-1 overflow-hidden bg-slate-950/40 text-slate-200 md:grid-cols-12"
       style={{
         border: `1px solid ${themeHexStr}33`,
         boxShadow: `0 0 15px ${themeHexStr}11`,
@@ -692,12 +692,13 @@ export default function RobotAssistantApp() {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 1 }}
-            animate={{ opacity: 1, scale: 2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
+            layout={false}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <div className="w-[120px] h-[120px]">
+            <div className="w-[245px] h-[200px]">
               <RobotScene
                 interactive={true}
                 activeAnimation={activeAnimation}
@@ -761,7 +762,7 @@ export default function RobotAssistantApp() {
               <span className="mb-2 block text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-1">
                 <Play size={11} /> Force Animation Matrix
               </span>
-              <div className="grid grid-cols-2 gap-1.5 max-h-[85px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 gap-1.5 max-h-[85px] overflow-y-auto overflow-x-hidden pr-1" style={{ overscrollBehavior: "contain" }}>
                 {availableAnimations.map((anim) => (
                   <button
                     key={anim}
@@ -935,7 +936,7 @@ export default function RobotAssistantApp() {
         </AnimatePresence>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3.5 scrollbar-thin" style={{ overscrollBehavior: "contain" }}>
           {messages.map((msg, index) => {
             const isBot = msg.sender === "bot";
             return (
@@ -996,7 +997,7 @@ export default function RobotAssistantApp() {
           <span className="px-2 mb-1.5 block text-[10px] text-slate-600 uppercase tracking-widest font-semibold flex items-center gap-1">
             <Sparkles size={10} className="text-cyan-400" /> {quizActive ? "Answer with A, B, C, or D" : "Smart Suggestions"}
           </span>
-          <div className="flex flex-wrap gap-1 px-1 max-h-[70px] overflow-y-auto">
+          <div className="flex flex-wrap gap-1 px-1 max-h-[70px] overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: "contain" }}>
             {!quizActive &&
               dynamicSuggestions.map((s, i) => (
                 <button

@@ -56,7 +56,7 @@ const certificates = [
     glow: "#f59e0b",
     category: "Academic Excellence",
     verified: true,
-    images: ["/images/deans-list.jpg"],
+    images: ["/images/dean/Dean.jpeg"],
   },
   {
     title: "MongoDB Associate Atlas Administrator",
