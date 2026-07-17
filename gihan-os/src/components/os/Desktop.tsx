@@ -119,33 +119,17 @@ export default function Desktop() {
 
   const showRobotActive = settings.showRobot && !settings.disableRobot;
 
-  // Force robot to stay in position using requestAnimationFrame loop
+  // Set robot position based on taskbar position with smooth transition
   useEffect(() => {
     if (!robotRef.current || !showRobotActive) return;
 
-    const forcePosition = () => {
-      if (!robotRef.current) return;
+    const taskbarHeight = 52;
+    const expectedBottom = settings.taskbarPosition === "bottom" ? taskbarHeight : 8;
+    const expectedRight = settings.taskbarPosition === "right" ? taskbarHeight : 8;
 
-      const rect = robotRef.current.getBoundingClientRect();
-      const taskbarHeight = 52;
-      const expectedBottom = settings.taskbarPosition === "bottom" ? taskbarHeight : 8;
-      const expectedRight = settings.taskbarPosition === "right" ? taskbarHeight : 8;
-
-      const actualBottom = window.innerHeight - rect.bottom;
-
-      // If robot has moved, force it back
-      if (Math.abs(actualBottom - expectedBottom) > 0.5) {
-        robotRef.current.style.bottom = `${expectedBottom}px`;
-        robotRef.current.style.right = `${expectedRight}px`;
-        robotRef.current.style.position = 'fixed';
-      }
-
-      requestAnimationFrame(forcePosition);
-    };
-
-    const animationId = requestAnimationFrame(forcePosition);
-
-    return () => cancelAnimationFrame(animationId);
+    robotRef.current.style.bottom = `${expectedBottom}px`;
+    robotRef.current.style.right = `${expectedRight}px`;
+    robotRef.current.style.transition = 'bottom 0.3s ease, right 0.3s ease';
   }, [showRobotActive, settings.taskbarPosition]);
 
   const robotOpen = windows.some((w) => w.id === "robot_assistant");
@@ -261,7 +245,8 @@ export default function Desktop() {
       {showRobotActive && !robotOpen && (
         <div
           ref={robotRef}
-          className="pointer-events-auto fixed bottom-[var(--taskbar-h)] right-0 h-[200px] w-[200px] md:right-0 md:h-[220px] md:w-[245px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
+          className="pointer-events-auto fixed h-[200px] w-[200px] md:h-[220px] md:w-[245px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
+          style={{ bottom: '52px', right: '8px' }}
           onMouseEnter={() => {
             if (settings.soundEnabled) sound.play("beep");
           }}

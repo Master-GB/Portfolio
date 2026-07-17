@@ -266,7 +266,7 @@ export default function BootScreen() {
 
       shockRef.current = shockRef.current.filter((s) => t - s.t0 < 900);
       for (const s of shockRef.current) {
-        const life = (t - s.t0) / 900;
+        const life = Math.max(0, (t - s.t0) / 900);
         ctx.strokeStyle = `rgba(34,211,238,${0.5 * (1 - life)})`;
         ctx.lineWidth = 2;
         ctx.beginPath();

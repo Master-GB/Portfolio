@@ -698,7 +698,7 @@ export default function RobotAssistantApp() {
             layout={false}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <div className="w-[245px] h-[200px]">
+            <div className="w-[245px] h-[200px] cursor-grab active:cursor-grabbing">
               <RobotScene
                 interactive={true}
                 activeAnimation={activeAnimation}
