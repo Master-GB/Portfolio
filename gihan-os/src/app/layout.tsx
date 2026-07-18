@@ -5,6 +5,17 @@ import { OSProvider } from "@/contexts/OSContext";
 import BootScreen from "@/components/boot/BootScreen";
 import Desktop from "@/components/os/Desktop";
 import { Toaster } from "react-hot-toast";
+import type { Metadata, Viewport } from "next";
+
+export const metadata: Metadata = {
+  title: "GihanOS-Portfolio",
+  description: "Interactive portfolio OS by Gihan — Software Engineering Undergraduate seeking internship opportunities.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,
@@ -13,14 +24,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <title>GihanOS-Portfolio</title>
-        <meta
-          name="description"
-          content="Interactive portfolio OS by Gihan — Software Engineering Undergraduate seeking internship opportunities."
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
       <body>
         <OSProvider>
           <Toaster position="top-right" />
