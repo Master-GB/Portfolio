@@ -81,18 +81,18 @@ const certificates = [
       "/images/mongo/DB10.png",
     ],
   },
-  {
-    title: "Postman Student Expert",
-    issuer: "Postman",
-    year: "2026",
-    badge: "🚀",
-    color: "#34d399",
-    border: "from-emerald-400 via-teal-500 to-green-400",
-    glow: "#34d399",
-    category: "API Testing",
-    verified: true,
-    images: ["/images/postman-expert.jpg"],
-  },
+  // {
+  //   title: "Postman Student Expert",
+  //   issuer: "Postman",
+  //   year: "2026",
+  //   badge: "🚀",
+  //   color: "#34d399",
+  //   border: "from-emerald-400 via-teal-500 to-green-400",
+  //   glow: "#34d399",
+  //   category: "API Testing",
+  //   verified: true,
+  //   images: ["/images/postman-expert.jpg"],
+  // },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────

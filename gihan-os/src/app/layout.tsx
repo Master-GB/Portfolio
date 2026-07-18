@@ -19,6 +19,7 @@ export default function RootLayout({
           name="description"
           content="Interactive portfolio OS by Gihan — Software Engineering Undergraduate seeking internship opportunities."
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
         <OSProvider>
