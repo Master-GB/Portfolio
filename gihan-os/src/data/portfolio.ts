@@ -432,12 +432,12 @@ export const apps = [
   { id: "projects", title: "Projects", icon: FolderKanban, defaultSize: { w: 1000, h: 650 } },
   { id: "skills", title: "Skills", icon: Code, defaultSize: { w: 850, h: 620 } },
   { id: "education", title: "Education", icon: GraduationCap, defaultSize: { w: 920, h: 620 } },
-  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 1280, h: 750 } },
+  { id: "contact", title: "Contact", icon: Mail, defaultSize: { w: 1150, h: 700 } },
   { id: "terminal", title: "Terminal", icon: Terminal, defaultSize: { w: 800, h: 500 } },
   { id: "settings", title: "Settings", icon: Settings, defaultSize: { w: 850, h: 600 } },
   { id: "explorer", title: "Explorer", icon: Folder, defaultSize: { w: 800, h: 600 } },
   { id: "notepad", title: "Notepad", icon: Edit3, defaultSize: { w: 800, h: 600 } },
-  { id: "robot_assistant", title: "AI Byte", icon: Bot, defaultSize: { w: 840, h: 620 } },
+  { id: "robot_assistant", title: "AI Byte", icon: Bot, defaultSize: { w: 880, h: 620 } },
   { id: "resume", title: "Resume.pdf", icon: File, defaultSize: { w: 800, h: 700 } },
 ] as const;
 

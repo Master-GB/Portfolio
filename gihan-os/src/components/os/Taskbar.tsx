@@ -122,19 +122,19 @@ export default function Taskbar() {
       "absolute rounded-full transition-all duration-300 motion-reduce:transition-none",
       isVertical
         ? cn(
-            "top-1/2 -translate-y-1/2 w-[3px]",
-            isLeft ? "left-0.5" : "right-0.5"
-          )
+          "top-1/2 -translate-y-1/2 w-[3px]",
+          isLeft ? "left-0.5" : "right-0.5"
+        )
         : "bottom-0.5 left-1/2 -translate-x-1/2 h-[3px]",
       isActive
         ? cn(
-            "bg-gradient-to-r from-indigo-400 to-cyan-300",
-            !lowPower && "shadow-[0_0_8px_rgba(129,140,248,0.85)]",
-            isVertical ? "h-5" : "w-5"
-          )
+          "bg-gradient-to-r from-indigo-400 to-cyan-300",
+          !lowPower && "shadow-[0_0_8px_rgba(129,140,248,0.85)]",
+          isVertical ? "h-5" : "w-5"
+        )
         : isRunning
-        ? cn("bg-slate-500/70", isVertical ? "h-2" : "w-2")
-        : "opacity-0"
+          ? cn("bg-slate-500/70", isVertical ? "h-2" : "w-2")
+          : "opacity-0"
     );
   }
 
@@ -142,7 +142,7 @@ export default function Taskbar() {
     <>
       <div
         className={cn(
-          "os-panel relative flex gap-2 border-slate-700/60 transition-all z-50",
+          "os-panel relative flex gap-2 border-slate-700/60 transition-all z-[100000]",
           isVertical
             ? "flex-col h-full w-full py-3 items-center"
             : "h-[var(--taskbar-h)] items-center px-3",
@@ -164,13 +164,13 @@ export default function Taskbar() {
               "pointer-events-none absolute opacity-70",
               isVertical
                 ? cn(
-                    "inset-y-0 w-px bg-gradient-to-b from-transparent via-indigo-400/50 to-transparent",
-                    settings.taskbarPosition === "left" ? "right-0" : "left-0"
-                  )
+                  "inset-y-0 w-px bg-gradient-to-b from-transparent via-indigo-400/50 to-transparent",
+                  settings.taskbarPosition === "left" ? "right-0" : "left-0"
+                )
                 : cn(
-                    "inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent",
-                    settings.taskbarPosition === "top" ? "bottom-0" : "top-0"
-                  )
+                  "inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent",
+                  settings.taskbarPosition === "top" ? "bottom-0" : "top-0"
+                )
             )}
           />
         )}
@@ -188,9 +188,9 @@ export default function Taskbar() {
             isVertical ? "h-10 w-10 px-0" : "h-10 px-3 text-sm font-medium",
             startMenuOpen
               ? cn(
-                  "bg-gradient-to-br from-indigo-500 to-violet-600 text-white",
-                  !lowPower && "shadow-[0_0_18px_rgba(99,102,241,0.55)]"
-                )
+                "bg-gradient-to-br from-indigo-500 to-violet-600 text-white",
+                !lowPower && "shadow-[0_0_18px_rgba(99,102,241,0.55)]"
+              )
               : "text-slate-300 hover:bg-slate-800/80 hover:text-white active:scale-95"
           )}
         >
@@ -272,17 +272,17 @@ export default function Taskbar() {
                     "motion-reduce:transition-none",
                     isVertical
                       ? cn(
-                          "top-1/2 -translate-y-1/2",
-                          settings.taskbarPosition === "left"
-                            ? "left-full ml-2"
-                            : "right-full mr-2"
-                        )
+                        "top-1/2 -translate-y-1/2",
+                        settings.taskbarPosition === "left"
+                          ? "left-full ml-2"
+                          : "right-full mr-2"
+                      )
                       : cn(
-                          "left-1/2 -translate-x-1/2",
-                          settings.taskbarPosition === "top"
-                            ? "top-full mt-2"
-                            : "bottom-full mb-2"
-                        )
+                        "left-1/2 -translate-x-1/2",
+                        settings.taskbarPosition === "top"
+                          ? "top-full mt-2"
+                          : "bottom-full mb-2"
+                      )
                   )}
                 >
                   {w.title}

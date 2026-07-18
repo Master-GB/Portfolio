@@ -14,17 +14,24 @@ export default function ContextMenu({ x, y, onClose }: Props) {
   const [adjustedY, setAdjustedY] = useState(y);
 
   useEffect(() => {
+    const ZOOM_SCALE = 0.9;
     // Simple logic to keep menu on screen
     const menuWidth = 200;
     const menuHeight = 150;
-    let newX = x;
-    let newY = y;
+    
+    const scaledX = x / ZOOM_SCALE;
+    const scaledY = y / ZOOM_SCALE;
+    const scaledInnerWidth = window.innerWidth / ZOOM_SCALE;
+    const scaledInnerHeight = window.innerHeight / ZOOM_SCALE;
 
-    if (x + menuWidth > window.innerWidth) {
-      newX = window.innerWidth - menuWidth - 10;
+    let newX = scaledX;
+    let newY = scaledY;
+
+    if (scaledX + menuWidth > scaledInnerWidth) {
+      newX = scaledInnerWidth - menuWidth - 10;
     }
-    if (y + menuHeight > window.innerHeight) {
-      newY = window.innerHeight - menuHeight - 10;
+    if (scaledY + menuHeight > scaledInnerHeight) {
+      newY = scaledInnerHeight - menuHeight - 10;
     }
 
     setAdjustedX(newX);

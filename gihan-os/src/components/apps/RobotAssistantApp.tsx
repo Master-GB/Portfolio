@@ -696,9 +696,9 @@ export default function RobotAssistantApp() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             layout={false}
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 flex items-center justify-center translate-y-10 translate-x-4"
           >
-            <div className="w-[245px] h-[200px] cursor-grab active:cursor-grabbing">
+            <div className="w-[350px] h-[300px] cursor-grab active:cursor-grabbing">
               <RobotScene
                 interactive={true}
                 activeAnimation={activeAnimation}
@@ -709,7 +709,7 @@ export default function RobotAssistantApp() {
         </div>
 
         {/* Configurations Box */}
-        <div className="space-y-4 p-4 bg-slate-900/60 backdrop-blur-sm border-t border-slate-800">
+        <div className="space-y-6 p-4 bg-slate-900/60 backdrop-blur-sm border-t border-slate-800">
           <div className="flex items-center justify-between">
             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
               <Settings2 size={14} className="text-cyan-400" />
@@ -756,7 +756,7 @@ export default function RobotAssistantApp() {
             </div>
           </div>
 
-          {/* Playable Animations */}
+          {/* Playable Animations
           {availableAnimations.length > 0 && (
             <div>
               <span className="mb-2 block text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-1">
@@ -776,11 +776,11 @@ export default function RobotAssistantApp() {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Quick Contact Copy */}
           <div>
-            <span className="mb-2 block text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-1">
+            <span className="mb-3 block text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-1">
               <Copy size={11} /> Quick Copy
             </span>
             <div className="flex flex-wrap gap-1.5">

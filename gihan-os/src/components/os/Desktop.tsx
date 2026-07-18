@@ -96,7 +96,7 @@ export default function Desktop() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const root = document.documentElement;
-    
+
     // Theme Mode
     if (settings.themeMode === "light") {
       root.classList.add("light-mode");
@@ -123,9 +123,8 @@ export default function Desktop() {
   useEffect(() => {
     if (!robotRef.current || !showRobotActive) return;
 
-    const taskbarHeight = 52;
-    const expectedBottom = settings.taskbarPosition === "bottom" ? taskbarHeight : 8;
-    const expectedRight = settings.taskbarPosition === "right" ? taskbarHeight : 8;
+    const expectedBottom = settings.taskbarPosition === "bottom" ? 18 : 8;
+    const expectedRight = settings.taskbarPosition === "right" ? 52 : -20;
 
     robotRef.current.style.bottom = `${expectedBottom}px`;
     robotRef.current.style.right = `${expectedRight}px`;
@@ -133,7 +132,7 @@ export default function Desktop() {
   }, [showRobotActive, settings.taskbarPosition]);
 
   const robotOpen = windows.some((w) => w.id === "robot_assistant");
-  
+
   const openAppIds = useMemo(() => windows.map((w) => w.id), [windows]);
   const tips = useMemo(() => getTimeTips(openAppIds, activeWindowId), [openAppIds, activeWindowId]);
 
@@ -176,21 +175,21 @@ export default function Desktop() {
   const getTaskbarWrapperClass = () => {
     switch (settings.taskbarPosition) {
       case "top":
-        return "absolute top-0 left-0 right-0 z-50";
+        return "absolute top-0 left-0 right-0 z-[100000]";
       case "left":
-        return "absolute left-0 top-0 bottom-0 z-50 w-[var(--taskbar-h)] flex flex-col";
+        return "absolute left-0 top-0 bottom-0 z-[100000] w-[var(--taskbar-h)] flex flex-col";
       case "right":
-        return "absolute right-0 top-0 bottom-0 z-50 w-[var(--taskbar-h)] flex flex-col";
+        return "absolute right-0 top-0 bottom-0 z-[100000] w-[var(--taskbar-h)] flex flex-col";
       case "bottom":
       default:
-        return "absolute bottom-0 left-0 right-0 z-50";
+        return "absolute bottom-0 left-0 right-0 z-[100000]";
     }
   };
 
   const taskbarInitialY = settings.taskbarPosition === "top" ? -60 : 60;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden select-none" onContextMenu={handleContextMenu}>
+    <div className="relative h-full w-full overflow-hidden select-none" onContextMenu={handleContextMenu}>
       <Wallpaper id={settings.wallpaper} />
 
       {contextMenu && (
@@ -211,7 +210,7 @@ export default function Desktop() {
         <div className="flex h-full flex-col justify-between py-4 px-1 md:py-6 md:px-2 text-slate-200">
           {settings.showDesktopIcons && (
             <div className={cn(
-              "flex h-full max-h-[calc(100vh-var(--taskbar-h)-2rem)] flex-col flex-wrap content-start gap-1 transition-all",
+              "flex h-full max-h-full flex-col flex-wrap content-start gap-1 transition-all",
               settings.desktopGrid ? "gap-4 md:gap-6" : "gap-0"
             )}>
               {apps.map((app) => (
@@ -246,7 +245,7 @@ export default function Desktop() {
         <div
           ref={robotRef}
           className="pointer-events-auto fixed h-[200px] w-[200px] md:h-[220px] md:w-[245px] hidden xl:flex flex-col items-center justify-end group z-[9999]"
-          style={{ bottom: '52px', right: '8px' }}
+          style={{ bottom: '28px', right: '-20px' }}
           onMouseEnter={() => {
             if (settings.soundEnabled) sound.play("beep");
           }}
@@ -257,24 +256,24 @@ export default function Desktop() {
           }}
           onWheel={(e) => e.stopPropagation()}
         >
-              {/* Cycling Glassmorphic Tip Bubble (hidden when assistant window is open) */}
-              {!robotOpen && (
-                <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={tips[tipIndex % tips.length]}
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{ duration: 0.35 }}
-                      className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
-                    >
-                      {tips[tipIndex % tips.length]}
-                      <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              )}
+          {/* Cycling Glassmorphic Tip Bubble (hidden when assistant window is open) */}
+          {!robotOpen && (
+            <div className="absolute top-0 z-20 w-full flex justify-center pointer-events-none px-2 mr-5">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={tips[tipIndex % tips.length]}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.35 }}
+                  className="relative rounded-2xl bg-slate-950/80 border border-slate-700/50 px-3.5 py-1.5 text-[11px] text-center text-slate-100 shadow-2xl backdrop-blur-md max-w-[210px] font-sans"
+                >
+                  {tips[tipIndex % tips.length]}
+                  <div className="absolute left-1/2 -bottom-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700/50 bg-slate-950/80" />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
 
           {/* 3D Canvas rendering */}
           <motion.div

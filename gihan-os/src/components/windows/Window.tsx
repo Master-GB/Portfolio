@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 
 const TASKBAR_H = 52;
+const ZOOM_SCALE = 0.9;
 
 
 
@@ -106,8 +107,8 @@ export default function Window({ window: win, children }: Props) {
 
         dragState.current.rafId = requestAnimationFrame(() => {
           if (!dragState.current || !windowRef.current) return;
-          const dx = ev.clientX - dragState.current.startX;
-          const dy = ev.clientY - dragState.current.startY;
+          const dx = (ev.clientX - dragState.current.startX) / ZOOM_SCALE;
+          const dy = (ev.clientY - dragState.current.startY) / ZOOM_SCALE;
 
           const isTaskbarTop = settings.taskbarPosition === "top";
           const isTaskbarLeft = settings.taskbarPosition === "left";
@@ -115,13 +116,13 @@ export default function Window({ window: win, children }: Props) {
 
           const minX = isTaskbarLeft ? TASKBAR_H : 0;
           const maxX = isTaskbarRight
-            ? window.innerWidth - TASKBAR_H - win.width
-            : window.innerWidth - win.width;
+            ? (window.innerWidth / ZOOM_SCALE) - TASKBAR_H - win.width
+            : (window.innerWidth / ZOOM_SCALE) - win.width;
 
           const minY = isTaskbarTop ? TASKBAR_H : 0;
           const maxY = settings.taskbarPosition === "bottom" || !settings.taskbarPosition
-            ? window.innerHeight - TASKBAR_H - win.height
-            : window.innerHeight - win.height;
+            ? (window.innerHeight / ZOOM_SCALE) - TASKBAR_H - win.height
+            : (window.innerHeight / ZOOM_SCALE) - win.height;
 
           let newX = dragState.current.originX + dx;
           let newY = dragState.current.originY + dy;
@@ -180,7 +181,7 @@ export default function Window({ window: win, children }: Props) {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  const isCompactScreen = viewportWidth <= 1440;
+  const isCompactScreen = (viewportWidth / ZOOM_SCALE) <= 1440;
   const isMaximized = win.maximized;
   const isTaskbarLeft = settings.taskbarPosition === "left";
   const isTaskbarRight = settings.taskbarPosition === "right";
@@ -190,13 +191,13 @@ export default function Window({ window: win, children }: Props) {
   const maximizedTop = isMaximized ? (isTaskbarTop ? TASKBAR_H : 0) : win.y;
   const maximizedWidth = isMaximized
     ? isTaskbarLeft || isTaskbarRight
-      ? `calc(100vw - ${TASKBAR_H}px)`
-      : "100vw"
+      ? `calc(100% - ${TASKBAR_H}px)`
+      : "100%"
     : win.width;
   const maximizedHeight = isMaximized
     ? isTaskbarLeft || isTaskbarRight
-      ? "100vh"
-      : `calc(100vh - ${TASKBAR_H}px)`
+      ? "100%"
+      : `calc(100% - ${TASKBAR_H}px)`
     : win.height;
 
   return (

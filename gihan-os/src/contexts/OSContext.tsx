@@ -76,11 +76,12 @@ function getApp(id: AppId) {
 }
 
 const TASKBAR_H = 52;
+const ZOOM_SCALE = 0.9;
 
 function getWindowPosition(width: number, height: number, index: number) {
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+  const vw = (typeof window !== "undefined" ? window.innerWidth : 1280) / ZOOM_SCALE;
   const vh =
-    typeof window !== "undefined" ? window.innerHeight - TASKBAR_H : 720;
+    (typeof window !== "undefined" ? window.innerHeight - TASKBAR_H : 720) / ZOOM_SCALE;
   const offset = (index % 6) * 22;
 
   return {
@@ -144,7 +145,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
         }
 
         const app = getApp(id);
-        const isTabletOrMobile = typeof window !== 'undefined' && window.innerWidth <= 1440;
+        const isTabletOrMobile = typeof window !== 'undefined' && (window.innerWidth / ZOOM_SCALE) <= 1440;
         const shouldMaximize = isTabletOrMobile;
 
         const pos = getWindowPosition(
@@ -204,7 +205,7 @@ export function OSProvider({ children }: { children: ReactNode }) {
 
   const restoreWindow = useCallback(
     (id: AppId) => {
-      const isTabletOrMobile = typeof window !== 'undefined' && window.innerWidth <= 1440;
+      const isTabletOrMobile = typeof window !== 'undefined' && (window.innerWidth / ZOOM_SCALE) <= 1440;
       setWindows((prev) =>
         prev.map((w) =>
           w.id === id ? { ...w, minimized: false, maximized: isTabletOrMobile ? true : w.maximized } : w

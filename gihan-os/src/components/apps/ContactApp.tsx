@@ -268,7 +268,6 @@ export default function ContactApp() {
               >
                 Contact Terminal
               </motion.h2>
-
               <p className="mt-3 max-w-lg text-base leading-relaxed text-slate-300">
                 Available for internships, collaborations, and select freelance work.
               </p>
@@ -455,7 +454,7 @@ export default function ContactApp() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-8 w-full"
           >
-            <div className="mb-5 flex items-center gap-3">
+            <div className="mb-4 flex items-center gap-3">
               <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-white/10" />
               <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
                 Direct Line
@@ -469,7 +468,7 @@ export default function ContactApp() {
                   key={method.label}
                   href={method.href}
                   whileHover={{ y: -3 }}
-                  className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-indigo-500/30 hover:bg-white/[0.06]"
+                  className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2 transition-colors duration-300 hover:border-indigo-500/30 hover:bg-white/[0.06]"
                 >
                   {/* sheen sweep on hover */}
                   <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
