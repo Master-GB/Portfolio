@@ -1185,8 +1185,8 @@ const MOCK_SKILLS = [
         subcategories: [{
             category: "Programming Languages",
             items: [
-                { name: "JavaScript", level: 95 }, { name: "TypeScript", level: 90 }, { name: "Python", level: 80 },
-                { name: "Java", level: 90 }, { name: "C++", level: 75 }, { name: "C#", level: 80 },
+                { name: "JavaScript", level: 90 }, { name: "TypeScript", level: 85 }, { name: "Python", level: 80 },
+                { name: "Java", level: 90 }, { name: "C++", level: 75 }, { name: "C#", level: 75 },
                 { name: "PHP", level: 75 }, { name: "SQL", level: 95 }, { name: "HTML", level: 95 },
                 { name: "CSS", level: 90 }, { name: "Kotlin", level: 70 },
             ],
@@ -1197,8 +1197,8 @@ const MOCK_SKILLS = [
         subcategories: [{
             category: "Frontend Frameworks & Libraries",
             items: [
-                { name: "React", level: 95 }, { name: "Next.js", level: 90 }, { name: "Tailwind CSS", level: 90 },
-                { name: "Framer Motion", level: 85 }, { name: "Three.js", level: 75 }, { name: "Vite", level: 88 },
+                { name: "React", level: 90 }, { name: "Next.js", level: 90 }, { name: "Tailwind CSS", level: 90 },
+                { name: "Framer Motion", level: 85 }, { name: "Three.js", level: 75 }, { name: "Vite", level: 85 },
                 { name: "Angular", level: 60 },
             ],
         }],
@@ -1218,10 +1218,10 @@ const MOCK_SKILLS = [
         subcategories: [{
             category: "Tools & Platforms",
             items: [
-                { name: "Git", level: 92 }, { name: "GitHub", level: 95 }, { name: "Vercel", level: 88 },
+                { name: "Git", level: 95 }, { name: "GitHub", level: 95 }, { name: "Vercel", level: 95 },
                 { name: "Railway", level: 80 }, { name: "Render", level: 70 }, { name: "Jira", level: 85 },
                 { name: "Figma", level: 80 }, { name: "Android Studio", level: 70 }, { name: "VS Code", level: 95 },
-                { name: "intelliJ IDEA ", level: 80 }, { name: "Unity Hub", level: 75 },
+                { name: "intelliJ IDEA ", level: 90 }, { name: "Unity Hub", level: 75 },
             ],
         }],
     },
@@ -1231,7 +1231,7 @@ const MOCK_SKILLS = [
             category: "Database",
             items: [
                 { name: "MongoDB", level: 95 }, { name: "SupaBase", level: 85 },
-                { name: "MySQL", level: 78 }, { name: "Firebase", level: 82 },
+                { name: "MySQL", level: 78 }, { name: "Firebase", level: 80 },
             ],
         }],
     },
@@ -1239,28 +1239,28 @@ const MOCK_SKILLS = [
         category: "Mobile Development",
         subcategories: [{
             category: "Mobile Development",
-            items: [{ name: "React Native", level: 80 }, { name: "Expo", level: 78 }],
+            items: [{ name: "React Native", level: 75 }, { name: "Expo", level: 75 }],
         }],
     },
     {
         category: "DevOps",
         subcategories: [{
             category: "DevOps",
-            items: [{ name: "CI/CD", level: 70 }, { name: "Docker", level: 85 }, { name: "kubernetes", level: 80 }],
+            items: [{ name: "CI/CD", level: 80 }, { name: "Docker", level: 85 }, { name: "kubernetes", level: 80 }],
         }],
     },
     {
         category: "Testing",
         subcategories: [{
             category: "Testing",
-            items: [{ name: "Jest", level: 80 }, { name: "Postman", level: 90 }, { name: "Playwright", level: 65 }],
+            items: [{ name: "Jest", level: 75 }, { name: "Postman", level: 90 }, { name: "Playwright", level: 65 }],
         }],
     },
     {
         category: "AI / ML",
         subcategories: [{
             category: "AI / ML",
-            items: [{ name: "Huging Face", level: 72 }, { name: "Gemini API", level: 80 }],
+            items: [{ name: "Huging Face", level: 70 }, { name: "Gemini API", level: 80 }],
         }],
     },
 ];
